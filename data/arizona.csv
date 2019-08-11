@@ -1,0 +1,105 @@
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Ahwatukee Childrens Theatre','Phoenix',3,now(),now()),
+('Apache Junction Performing Arts Center','Apache Junction',3,now(),now()),
+('Arizona Broadway Theatre','Peoria',3,now(),now()),
+('Arizona Community Theatre','Coolidge',3,now(),now()),
+('Arizona Community Theatre ACT 1','Coolidge',3,now(),now()),
+('Arizona Regional Theatre','Tempe',3,now(),now()),
+('Arizona Repertory Theatre','Tucson',3,now(),now()),
+('Arizona Theatre Company','Phoenix',3,now(),now()),
+('Arizona Theatre Company - Temple of Music and Art','Tucson',3,now(),now()),
+('Arnette Scott Ward Performing Arts Center','Chandler',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('ASU Gammage','Tempe',3,now(),now()),
+('Black Theatre Troupe Inc','Phoenix',3,now(),now()),
+('Borderlands Theatre','Tucson',3,now(),now()),
+('Brelby Theatre Company','Glendale',3,now(),now()),
+('Celebrity Theatre','Phoenix',3,now(),now()),
+('Chandler Center for the Arts','Chandler',3,now(),now()),
+('Childsplay Theatre Co','Tempe',3,now(),now()),
+('Coolidge Performing Arts Center','Coolidge',3,now(),now()),
+('Del E. Webb Center for the Performing Arts','Wickenburg',3,now(),now()),
+('Desert Foothills Theater','Scottsdale',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Desert Stages Theatre','Scottsdale',3,now(),now()),
+('DesertView Performing Arts Center','Tucson',3,now(),now()),
+('E. Lowell Rogers Amphitheatre','Glendale',3,now(),now()),
+('East Valley Children''s Theatre','Mesa',3,now(),now()),
+('Edward B. Berger Performing Arts Center','Tucson',3,now(),now()),
+('EMCC Performing Arts Center (PAC)','Avondale',3,now(),now()),
+('Ethington Theatre','Phoenix',3,now(),now()),
+('Farnsworth Theater','Mesa',3,now(),now()),
+('Foothills Community Foundation','Scottsdale',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Fountain Hills Theater','Fountain Hills',3,now(),now()),
+('Fox Tucson Theatre','Tucson',3,now(),now()),
+('Gaslight Theatre','Tucson',3,now(),now()),
+('Ghostlight Theatre','Sun City West',3,now(),now()),
+('Grace Arts Live','Lake Havasu City',3,now(),now()),
+('GreasepaintcYoutheatre & Scottsdale Community Players','Scottsdale',3,now(),now()),
+('Hale Centre Theatre - Arizona','Gilbert',3,now(),now()),
+('Herberger Theater Center','Phoenix',3,now(),now()),
+('Higley Center for the Performing Arts','Gilbert',3,now(),now()),
+('Ikeda Theater','Mesa',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Infuse Open Mic','Phoenix',3,now(),now()),
+('Invisible Theatre Box Office','Tucson',3,now(),now()),
+('John Paul Theatre','Phoenix',3,now(),now()),
+('Leo Rich Theater','Tucson',3,now(),now()),
+('Limelight Youth Theatre','Gilbert',3,now(),now()),
+('Live Theatre Workshop','Tucson',3,now(),now()),
+('Lyceum Theatre','Tempe',3,now(),now()),
+('Maricopa Community Theatre','Maricopa',3,now(),now()),
+('MCC Theatre','Mesa',3,now(),now()),
+('Mesa Encore Theatre','Mesa',3,now(),now());
+
+
+
+
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Mesa''s Farnsworth Hall Community Theatre','Mesa',3,now(),now()),
+('Musical Theatre of Anthem','Anthem',3,now(),now()),
+('Nesbitt/Elliot Playhouse','Mesa',3,now(),now()),
+('Northland Pioneer College','Snowflake',3,now(),now()),
+('Orpheum Theater','Flagstaff',3,now(),now()),
+('Orpheum Theatre Phoenix','Phoenix',3,now(),now()),
+('Prescott Center for the Arts','Prescott',3,now(),now()),
+('Queen Creek Performing Arts Center','Queen Creek',3,now(),now()),
+('Roadrunner Theatre','Tucson',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Scottsdale Center for the Performing Arts','Scottsdale',3,now(),now()),
+('Scottsdale Mall Amphitheater','Scottsdale',3,now(),now()),
+('Scottsdale Musical Theater Company','Tempe',3,now(),now()),
+('Scottsdale School of Film+Theatre at Scottsdale Community College','Scottsdale',3,now(),now()),
+('Second Beat Improv Theater','Phoenix',3,now(),now()),
+('Sedona Performing Arts Center','Sedona',3,now(),now()),
+('Silver Star Theater','Mesa',3,now(),now()),
+('Sonoran Foothills Community Center','Phoenix',3,now(),now()),
+('Spotlight Youth Theatre','Glendale',3,now(),now()),
+('Stage Dreams Youth Theater','Glendale',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Starlight Community Theater','Phoenix',3,now(),now()),
+('Stray Cat Theatre','Tempe',3,now(),now()),
+('The Community Players Theater','Tucson',3,now(),now()),
+('The Phoenix Theatre Company','Phoenix',3,now(),now()),
+('The Rogue Theatre','Tucson',3,now(),now()),
+('The Torch Theatre','Phoenix',3,now(),now()),
+('Theater League Inc','Phoenix',3,now(),now()),
+('Theater Works','Peoria',3,now(),now()),
+('Theatrikos Theatre Company','Flagstaff',3,now(),now()),
+('Tucson Music Hall','Tucson',3,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Tuscany Theatre','Gilbert',3,now(),now()),
+('Valley Youth Theatre','Phoenix',3,now(),now()),
+('Virginia G. Piper Theater','Scottsdale',3,now(),now()),
+('Yavapai College Performing Arts Center','Prescott',3,now(),now()),
+('Yuma Readiness & Community Center','Yuma',3,now(),now()),
+('ZAO Theatre','Apache Junction',3,now(),now());

@@ -1,0 +1,58 @@
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Acta','Huntsville',1,now(),now()),
+('Acta','Trussville',1,now(),now()),
+('Alabama Shakespeare Festival','Montgomery',1,now(),now()),
+('Alabama Theatre','Birmingham',1,now(),now()),
+('Auburn Area Community Theatre','Auburn',1,now(),now()),
+('Bay Tree Council for the Performing Arts','Red Bay',1,now(),now()),
+('Birmingham Children''s Theatre','Birmingham',1,now(),now()),
+('Birmingham Festival Theatre','Birmingham',1,now(),now());
+
+
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Broadway Theatre League','Huntsville',1,now(),now()),
+('Carver Theatre for the Performing Arts','Birmingham',1,now(),now()),
+('Chickasaw Civic Theatre','Mobile',1,now(),now()),
+('Community Actor''s Studio Theatre','Anniston',1,now(),now()),
+('Historic Zodiac Playhouse','Florence',1,now(),now()),
+('Jan Dempsey Arts Center','Auburn',1,now(),now()),
+('Joe Jefferson Players','Mobile',1,now(),now()),
+('Leeds Arts Council, Inc.','Leeds',1,now(),now()),
+('Merrimack Hall Performing Arts','Huntsville',1,now(),now()),
+('Millbrook Community Players, Inc','Millbrook',1,now(),now());
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Millbrook Theatre','Millbrook',1,now(),now()),
+('Mobile Theatre Guild','Mobile',1,now(),now()),
+('Northeast Alabama Community College','Rainsville',1,now(),now()),
+('Playhouse in the Park','Mobile',1,now(),now()),
+('Prattville Theatre','Prattville',1,now(),now()),
+('Princess Theatre','Decatur',1,now(),now()),
+('Red Mountain Theatre Company','Birmingham',1,now(),now()),
+('Shoals Community Theatre','Florence',1,now(),now()),
+('South Baldwin Community Theatre','Gulf Shores',1,now(),now()),
+('South City Theatre','Pelham',1,now(),now());
+
+
+
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Southeast Alabama Community Theatre (SEACT)','Dothan',1,now(),now()),
+('Spark Theater Company','Dothan',1,now(),now()),
+('Springville Community Theater','Springville',1,now(),now()),
+('Terrific New Theatre','Birmingham',1,now(),now()),
+('The Cloverdale Playhouse','Montgomery',1,now(),now()),
+('Theatre 98 Inc','Fairhope',1,now(),now()),
+('Theatre Downtown','Birmingham',1,now(),now()),
+('Theatre Huntsville','Huntsville',1,now(),now()),
+('Theatre of Gadsden','Gadsden',1,now(),now()),
+('Theatre Tuscaloosa','Tuscaloosa',1,now(),now());
+
+
+INSERT INTO theaters (name,city,state,"createdAt","updatedAt")
+VALUES ('Tuskegee Repertory Theatre Inc','Tuskegee',1,now(),now()),
+('Virginia Samford Theatre','Birmingham',1,now(),now()),
+('Way Off Broadway Theatre','Prattville',1,now(),now()),
+('Whole Backstage Theatre','Guntersville',1,now(),now());
+

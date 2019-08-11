@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     classMethods: {
       associate: function(models) {
         States.hasMany(models.theaters, {foreignKey: 'state_id'});
+        States.hasMany(models.city_state, {foreignKey: 'state2_id'});
       }
     }
   });
