@@ -1,88 +1,53 @@
 const express = require('express');
 const moment = require('moment');
 const app = express();
-//const sequelize = require('sequelize');
-//const Op = sequelize.Op;
-/*
-const sequelize = new Sequelize('database', 'username', 'password', {
-  host: 'localhost',
-  dialect: 'postgres'
-});
-*/
-const PORT = process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3100;
 const fetch=require('node-fetch');
-
-//const passport = require('passport');
-//const cookieParser = require('cookie-parser');
-//const RedisStore = require('connect-redis')(session);
-//const db = require('./models');
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
+const redis = require('redis')
+const session = require('express-session')
+const RedisStore = require('connect-redis')(session);
+const client = redis.createClient();
 const bodyParser = require('body-parser');
-//const bcrypt = require('bcrypt');
-//const jsonwebtoken = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
+const jsonwebtoken = require("jsonwebtoken");
+const saltRounds = 10;
 
-//const Theaters = db.theaters;
-//const States = db.states;
-//const Artists = db.artists;
-//const Genres = db.genres;
-//const Shows = db.shows;
-//const Users = db.users;
+require('./passport')();
 
-const fs = require('fs');
-const readline = require('readline');
+var q = require('./queries/queries.js');
+var tokens = require('./auth/tokens.js');
+const { Pool, Client } = require('pg');
+const creds = tokens.db_creds;
 
-var q = require('./queries/queries.js')
-var h = require('./html/html.js')
+const g_findplace_url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?';
+const g_findplace_type= '&inputtype=textquery';
+//const fields = '&fields=formatted_address,name,geometry,place_id';
+const gurl = 'https://maps.googleapis.com/maps/api/place/details/json?';
+//const fields = '&fields=formatted_phone_number,website';
+const api = tokens.google_api_key;
 
-
-//const saltRounds = 10;
-
-//require('./passport')();
-
-app.use(express.static('public'));
-
-var jsonParser = bodyParser.json();
-var urlencodedParser = bodyParser.urlencoded({ extended: false });
-
-
-
-
-app.get('/api/auth', jsonParser, (req, res) => {
-  // let id = req.user ? req.user.id : null;
-  // console.log("PASSPORT ID", req.session.passport.user)
-  // let id = req.session.passport.user ? req.session.passport.user : null;
-  // let username = req.user ? req.user.username : null;
-  // res.json({id, username })
-  if (req.user){
-    res.json( { id: req.user } )
-  } else {
-    return res.status(401).json({ message: "Unauthorized user!" });
-  }
-})
-
-
-
-
-/*
-
-
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-*/
-
-/* app.use(cookieParser());
+app.use(cookieParser());
 app.use(
   session({
-    store: new RedisStore(),
+    store: new RedisStore({ client }),
     secret: 'run with the devil',
     resave: false,
     saveUninitialized: false
   })
 );
 
+app.use(express.static('public'));
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+var jsonParser = bodyParser.json();
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 app.use(function(req, res, next){
   if (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'JWT'){
@@ -102,11 +67,15 @@ app.use(function(req, res, next){
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-app.get('/api/logout', jsonParser, (req, res) => {
-  req.logout()
-  req.session.destroy();
-  res.send( { message: 'Successfully logged out' } );
+app.get('/api/auth', jsonParser, (req, res) => {
+  let id = req.session.passport.user ? req.session.passport.user : null;
+  let username = req.user ? req.user.username : null;
+  res.json({id, username })
+  if (req.user){
+    res.json( { id: req.user } )
+  } else {
+    return res.status(401).json({ message: "Unauthorized user!" });
+  }
 })
 
 //create and respond with new user
@@ -130,608 +99,673 @@ app.post('/api/register', jsonParser, (req, res) => {
   });
 });
 
-app.get('/api/auth', jsonParser, (req, res) => {
-  // let id = req.user ? req.user.id : null;
-  // console.log("PASSPORT ID", req.session.passport.user)
-  // let id = req.session.passport.user ? req.session.passport.user : null;
-  // let username = req.user ? req.user.username : null;
-  // res.json({id, username })
-  if (req.user){
-    res.json( { id: req.user } )
-  } else {
-    return res.status(401).json({ message: "Unauthorized user!" });
-  }
-})
-
-
-//create and respond with new user
+//check login credentials
 app.post('/api/login', jsonParser, (req, res) => {
-  Users.findOne({where: { username: req.body.username }})
-  .then( user => {
-    if (!user) {
-      res.status(401).json({ message: 'Authentication failed. User not found.'})
-    } else {
-      if(bcrypt.compareSync(req.body.password, user.password)){
-        return res.json({ token: jsonwebtoken.sign( { id: user.id, username: user.username}, 'RESTFULAPIs')})
+  query=q.get_user( req.body.username );
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    if ( _res && _res.rows ){
+      const user=_res.rows[0];
+      if(bcrypt.compareSync( req.body.password, user.password )){
+        return res.json( { token: jsonwebtoken.sign( { id: user.user_id, username: user.username}, 'RESTFULAPIs' ) } )
       } else {
         res.status(401).json({ message: 'Authentication failed. Wrong password.'});
       }
+    } else {
+      res.status(401).json({ message: 'Authentication failed. User not found.'})
     }
-  })
+  });
 });
-  // passport.authenticate('local', (err, user) => {
-  //     if (err) return res.status(500).json({ err });
-  //     if (!user) return res.status(401).json({ message: 'invalid' });
 
-  //     req.logIn( user, (err) => {
-  //       if (err) return res.json({ err });
-  //       // return res.status(200).json(user);
-  //     });
-  // })(req, res);
+app.get('/api/logout', jsonParser, (req, res) => {
+  req.logout()
+  req.session.destroy();
+  res.send( { message: 'Successfully logged out' } );
+})
 
+app.get('/', (req,res) => {
+  var id;
+  var type=req.query.type;
+  req.query.id ? id=req.query.id : id=1;
+  const prom = new Promise( (resolve, reject ) => get_data( type, id, resolve, reject ) );
+  prom
+  .then( data => res.json({ data, id }) );
+});
 
-*/
+function get_data(type,id, resolve, reject){
+  var query;
+  switch (type){
+    case 'theater':
+      query=q.theater(id);
+      break;
+    case 'productions':
+      query=q.productions(id);
+      break;
+    case 'all_shows':
+      query=q.shows();
+      break;
+    case 'venues_by_theater':
+      query=q.venues_by_theater(id);
+      break;
+    case 'venue_by_production':
+      query=q.venue_by_production(id);
+      break;
+    case 'venues_all':
+      query=q.venues_all();
+      break;
+    case 'book':
+    case 'lyrics':
+    case 'music':
+    case 'playwright':
+      query=q.artist(id,type,'show','id');
+      break;
+    case 'directors':
+    case 'choreographers':
+    case 'music_directors':
+      query=q.artist(id,type,'production','production_id');
+      break;
+    case 'all_directors':
+    case 'all_choreographers':
+    case 'all_mds':
+    case 'all_artists':
+      query=q.staff(type);
+      break;
+  }
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    if ( _res && _res.rows ){
+      var data=_res.rows;
+    } else {
+      data: { error: 'no rows returned' }
+    }
+    pool.end();
+    resolve(data)
+  });
+}
 
-// const gurl = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?';
-// const type= '&inputtype=textquery';
-// const fields = '&fields=formatted_address,name,geometry,place_id';
+app.get('/artists',function(req,res){
 
+  const id=req.query.id;
+  const type=parseInt(req.query.type);
 
-const gurl = 'https://maps.googleapis.com/maps/api/place/details/json?';
-const fields = '&fields=formatted_phone_number,website';
+  if (type===1){
+    let table='show';
+    let field='id';
+    const book = new Promise( (resolve, reject ) => get_artists( id, 'book', table, field, resolve, reject ) );
+    const lyrics = new Promise( (resolve, reject ) => get_artists( id, 'lyrics', table, field,  resolve, reject ) );
+    const music = new Promise( (resolve, reject ) => get_artists( id, 'music', table, field, resolve, reject ) );
+    const playwright = new Promise( (resolve, reject ) => get_artists( id, 'playwright', table, field, resolve, reject ) );
+    Promise.all([book,lyrics,music,playwright])
+    .then(data => {
+      res.json({ book: data[0], lyrics: data[1], music: data[2], pw: data[3] });
+    });
+  } else if (type===2) {
+    let table='production';
+    let field='production_id';
+    const dir = new Promise( (resolve, reject ) => get_artists( id, 'directors', table, field, resolve, reject ) );
+    const chor = new Promise( (resolve, reject ) => get_artists( id, 'choreographers', table, field,  resolve, reject ) );
+    const md = new Promise( (resolve, reject ) => get_artists( id, 'music_directors', table, field, resolve, reject ) );
+    Promise.all([dir,chor,md])
+    .then(data => {
+      res.json({ dir: data[0], chor: data[1], md: data[2] });
+    })
+  }
+});
 
+function get_artists(id, type, table, field, resolve, reject ){
+  query=q.artist(id,type,table,field);
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    if ( _res && _res.rows ){
+      resolve(_res.rows)
+    } else {
+      reject({ error: 'no rows returned' })
+    }
+  });
+}
 
-const { Pool, Client } = require('pg');
-const creds = {
-  user: 'theater_user',
-  host: '127.0.0.1',
-  database: 'johnatkins',
-  password: 'Die4u$'
-};
-
-
-app.get('/',function(req,res){
-  var thtr_id=1;
-  var query = q.theater_data(1);
+app.get('/states',function(req,res){
+  var query = q.states();
   var pool = new Pool(creds);
   pool.query(query, (err, _res) => {
     var data=_res.rows;
-    //console.log(data);
     pool.end();
-    var t_loc = data[0];
-    var p_info=sort_shows(data);
-    var html=h.css();
-    html+=h.theater_html(t_loc);
-    html+=h.all_shows_html(p_info);
-    res.send(html);
+    res.json({ data });
+    return;
   });
 });
 
+app.get('/productions',function(req,res){
+  var thtr_id;
+  req.query.id ? thtr_id=req.query.id : thtr_id=1;
+  var query = q.states();
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    var data=_res.rows;
+    pool.end();
+    res.json({ data });
+    return;
+  });
+});
 
+app.post('/searchByCity',jsonParser, (req,res) => {
+  const b=req.body;
+  const data={};
 
-function sort_shows(data){
-  var new_data=[];
-  var shows = data.map( item => item.title).filter((v, i, a) => a.indexOf(v) === i);
-  for (var i = shows.length - 1; i >= 0; i--) {
-    var temp={ show_title: shows[i]};
-    data.forEach( item => {
-      if (item.title === shows[i]){
-        temp.genre = item.genre;
-        temp.venue_name=item.venue_name;
-        temp.venue_address=item.venue_address;
-        temp.venue_directions=item.venue_directions;
-        temp.description=item.description;
-        temp.start_date=moment(item.start_date).format('MMMM D, YYYY');
-        temp.end_date=moment(item.end_date).format('MMMM D, YYYY');
-        temp = make_obj(temp,item.book_first,item.book_last,'book');
-        temp = make_obj(temp,item.music_first,item.music_last,'music');
-        temp = make_obj(temp,item.lyr_first,item.lyr_last,'music');
-        temp = make_obj(temp,item.pw_first,item.pw_last,'pw');
-        temp = make_obj(temp,item.dir_first,item.dir_last,'dir');
-        temp = make_obj(temp,item.chor_first,item.chor_last,'chor');
+  data.city=b.city;
+  data.distance=b.distance;
+  var state = b.state.split('-');
+  data.state=state[0];
+  data.state_name=state[1];
+
+  var pool = new Pool(creds);
+  var cityg=q.city_get(data.city,data.state);
+    pool.query(cityg, (err, _res) => {
+      if (_res.rowCount === 0) {
+        citys=q.city_save(data);
+        pool.query(citys, (err, _res) => {
+          data.city_id = _res.rows[0].city_id;
+          check_geo();
+          pool.end();
+        })
+      } else {
+        if (_res.rows[0].location_lat) data.location_lat=_res.rows[0].location_lat;
+        if (_res.rows[0].location_lng) data.location_lng=_res.rows[0].location_lng;
+        data.city_id=_res.rows[0].city_id;
+        check_geo();
+        pool.end();
       }
-    });
-    new_data[new_data.length]=temp;
-  }
-  return new_data;
-}
+    })
 
-function make_obj(temp, first, last, type){
-  var tmp_o={};
-  if (first) tmp_o.first=first;
-  if (last) tmp_o.last=last;
-  if (isEmpty(tmp_o)) return temp;
-  if (!temp[type]){
-    temp[type]=[tmp_o];
-  } else {
-    if (tmp_o.first !== temp[type][0].first && tmp_o.last !== temp[type][0].last) temp[type][temp[type].length]=tmp_o;
-  }
-  return temp;
-}
-
-function isEmpty(obj) {
-    for(var key in obj) {
-        if(obj.hasOwnProperty(key))
-            return false;
+    function check_geo(){
+      if (data.location_lat && data.location_lng){
+        find_theaters();
+      } else {
+        const geo_promise = new Promise( (resolve, reject ) => getGeometry( data, resolve, reject ) );
+        geo_promise.then( values => ( values === 'ok' ) ? find_theaters() : res.json({ status: 'failed' }) );
+      }
     }
-    return true;
-}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.get('/allshows', function (req, res) {
-  var pool = new Pool(all_shows);
-  pool.query(myquery, (err, results) => {
-    var rows=results.rows;
-
-    console.log(rows);
-
-    pool.end();
-    var html = create_table(rows);
-
-    res.send(html)
-  });
+    function find_theaters(){
+      let srch=q.location_search(data);
+      var pools = new Pool(creds);
+      pools.query(srch, (err, _res) => {
+        var new_data=_res.rows;
+        pools.end();
+        res.json(new_data)
+      })
+    }
 });
 
+function getGeometry(data, resolve, reject){
+  //https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=Museum%20of%20Contemporary%20Art%20Australia&inputtype=textquery&fields=photos,formatted_address,name,rating,opening_hours,geometry&key=YOUR_API_KEY
+  let input=`input=${data.city} ${data.state_name}`;
+  input.replace(/ /g,'%');
+  let fields = '&fields=geometry';
+  let url=`${g_findplace_url}${input}${g_findplace_type}${fields}&key=${api}`;
 
-function create_table(rows){
-  var html='<style type="text/CSS"> div { margin-bottom: 5px; } p { font-size: 10px; } span { font-style: italic; padding-left: 10px; }</style>';
-  rows.forEach( item => {
-     html+=`<div><p><strong>${item.id}&emsp;${item.title}</strong><span>Genre:</span> ${item.genre}`;
-     if (test(item.book_last)!=='') html+=`<span>Book:</span> ${test(item.book_first)} ${test(item.book_last)}`;
-     if (test(item.music_last)!=='') html+=`<span>Music:</span> ${test(item.music_first)} ${test(item.music_last)}`;
-     if (test(item.lyrics_last)!=='') html+=`<span>Lyrics:</span> ${test(item.lyrics_first)} ${test(item.lyrics_last)}`;
-     if (test(item.pw_last)!=='') html+=`<span>Playwright:</span> ${test(item.pw_first)} ${test(item.pw_last)}`;
-     html+='</p></div>';
+  fetch(url)
+  .then(res => res.json())
+  .then(json => {
+    data.location_lat=String(json.candidates[0].geometry.location.lat);
+    data.location_lng=String(json.candidates[0].geometry.location.lng);
+    data.viewport_ne_lat=String(json.candidates[0].geometry.viewport.northeast.lat);
+    data.viewport_ne_lng=String(json.candidates[0].geometry.viewport.northeast.lng);
+    data.viewport_sw_lat=String(json.candidates[0].geometry.viewport.southwest.lat);
+    data.viewport_sw_lng=String(json.candidates[0].geometry.viewport.southwest.lng);
+    geoq=q.geometry_save(data);
+    var poolc = new Pool(creds);
+    poolc.query(geoq, (err, _res) => {
+      poolc.end();
+      resolve('ok');
+      return;
+    })
   })
-
-  function test(val) {
-    return (val ? val : '');
-  }
-  return html;
+  .catch( err => reject('failure'))
 }
 
-
-app.get('/emails', function (req, res) {
-    var update=parseInt(req.query.update);
-    var del=parseInt(req.query.delete);
-    var email=req.query.email;
-    var ds ='';
-
-    var _thisid;
-    if (update) {
-      console.log('update_activated')
-       Theaters.update( { 'email':email, 'fax': 'ok' },
-         { returning: true, where: { id: update }
-       })
-       .then(function(json){
-        var data = json[1][0].dataValues;
-        updated_data=JSON.stringify(data);
-        load();
-       })
-       .catch(function (err) {
-          console.log(err);
-       });
-    } else if (del) {
-      console.log('delete activated');
-       Theaters.destroy( { where: { id: del } })
-       .then(function(json){
-        console.log(json);
-        load();
-       })
-       .catch(function (err) {
-          console.log(err);
-       });
-    } else {
-      load();
-    }
-
-    function load(){
-      Theaters.findAll({
-        where: {
-          id: {
-                [Op.gte]: 101,
-                [Op.lte]: 200
-             },
-            fax: {
-              [Op.not]: 'ok'
-            }
-          }
-      })
-      .then( thtr => {
-
-        console.log(thtr);
-
-        thtr.forEach( i => {
-          ds += `<form><p>
-            <button name='delete' type="submit" value="${i.id}">Delete</button>
-            <span>${i.id}</span>
-            <span style='padding:10px'>${i.name}</span>
-            <a href='${i.website}' target='_blank'>website</a>
-            <input name='email' type="text" value="${i.email}"></input>
-            <button name='update' type="submit" value="${i.id}">Update</button>
-          </p></form>`;
-        });
-
-        res.send(ds);
-      })
-
-    }
-
+app.post('/alter_theater', jsonParser, (req,res) => {
+  const th=req.body;
+  var query = q.theater_update(th);
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    var data=_res.rows;
+    pool.end();
+    res.json({ data });
+    return;
+  });
 });
 
+app.post('/updateVenue', jsonParser, (req,res) => {
+  const body=req.body;
+  const venue={ tid : body.tid };
+  (body.vid) ? venue.vid=body.vid : venue.vid=0;
+  (body.venue_name_1) ? venue.name=body.venue_name_1.replace(/'/g, "''") : venue.name='';
+  (body.venue_add1_1) ? venue.address1=body.venue_add1_1.replace(/'/g, "''") : venue.address1='';
+  (body.venue_add2_1) ? venue.address2=body.venue_add2_1.replace(/'/g, "''") : venue.address2='';
+  (body.venue_zip_1) ? venue.zip=body.venue_zip_1 : venue.zip='';
+  (body.venue_phone_1) ? venue.phone=body.venue_phone_1 : venue.phone='';
+  (body.venue_directions_1) ? venue.directions=body.venue_directions_1.replace(/'/g, "''") : venue.directions='';
 
-app.get('/shows', function (req, res) {
-
-    var _title = String(req.query.title),
-        _genre=parseInt(req.query.genre),
-        _book=parseInt(req.query.book),
-        _bfirst=req.query.fbook,
-        _blast=req.query.lbook,
-        _music=parseInt(req.query.music),
-        _mfirst=req.query.fmusic,
-        _mlast=req.query.lmusic,
-        _lyrics=parseInt(req.query.lyrics),
-        _lfirst=req.query.flyrics,
-        _llast=req.query.llyrics,
-        _pw=parseInt(req.query.playwright),
-        _pwfirst=req.query.fpw,
-        _pwlast=req.query.lpw,
-        _create=req.query.create;
-
-    const show_name=`<textarea name="title"></textarea>`;
-    var genre_opts=`<select name="genre">
-                  <option value="2">musical, comedy</option>
-                  <option value="3">musical, drama</option>
-                  <option value="4">musical, revue</option>
-                  <option value="5">play, comedy</option>
-                  <option value="6">play, drama</option>
-                </select>`;
-
-    var artist_opts;
-    function make_form(){
-          Artists.findAll( { order: [['lname', 'ASC']] } )
-          .then(function(artists){
-            var artist_opts=`<option value="0">None</option>`;
-            artists.forEach( item => {
-              var name=item.dataValues;
-              var tmp=`<option value="${name.id}">${name.lname},${name.fname}</option>`
-              artist_opts += tmp;
-            });
-            var new_form =`<form>
-                            <p>Title: ${show_name}</p>
-                            <p>Genre: ${genre_opts}</p>
-                            <p>Book: <select name="book">${artist_opts}</select>New: First: <input type="text" name="fbook" value=""></input>Last: <input type="text" name="lbook" value=""></input></p>
-                            <p>Music: <select name="music">${artist_opts}</select>New: First: <input type="text" name="fmusic" value=""></input>Last: <input type="text" name="lmusic" value=""></p>
-                            <p>Lyrics: <select name="lyrics">${artist_opts}</select>New: First: <input type="text" name="flyrics" value=""></input>Last: <input type="text" name="llyrics" value=""></p>
-                            <p>Playwright: <select name="playwright">${artist_opts}</select>New: First: <input type="text" name="fpw" value=""></input>Last: <input type="text" name="lpw" value=""></p>
-                            <p><button name="create" value="new" type="submit">Create</button></p>
-                          </form>`;
-
-            res.send(new_form);
-          });
-    }
-
-  if (_create !== 'new'){
-    make_form();
+  if (body.venue_city_1 && body.venue_state) {
+    cityPromise = new Promise( (resolve, reject) => get_city( body.venue_city_1, parseInt(body.venue_state), resolve, reject ) );
+    cityPromise
+    .then( result => {
+      venue.city_id=result;
+      process();
+    })
   } else {
+    process();
+  }
 
-    console.log('starting step 1');
-    var _bookid=null, _musicid=null, _lyricid=null, _pwid=null;
-    if (_book ===0 && _bfirst && _blast){
-            Artists.create({
-              fname: _bfirst,
-              lname: _blast
-            })
-            .then( artist => {
-              _bookid = artist.dataValues.id;
-              _bookid=parseInt(_bookid);
-              console.log('finishing step 1');
-              step2(_bookid);
-            }).catch( err => console.log(err));
-      } else if (_book !==0){
-        _bookid=_book;
-        console.log('finishing step 1');
-        step2();
-      } else {
-        console.log('finishing step 1');
-        step2();
-      }
+  function process(){
+    switch (body.venue_type){
 
+      case 1:  //associate
+        var prom = new Promise( (resolve, reject) => associate_venue(venue,resolve,reject) );
+        prom.then( result => get_theaters() )
+        break;
 
-    function step2(){
-      console.log('starting step 2');
-      if (_music===0 && _mfirst && _mlast){
-          Artists.create({
-            fname: _mfirst,
-            lname: _mlast
-          })
-          .then( artist => {
-            _musicid = artist.dataValues.id;
-            _musicid=parseInt(_musicid);
-            console.log('finishing step 2');
-            step3()
-          }).catch( err => console.log(err));
-      } else if (_music !==0){
-        _musicid=_music;
-        console.log('finishing step 2');
-        step3()
-      } else {
-        console.log('finishing step 2');
-        step3()
-      }
+      case 2:  //update
+        var prom = new Promise( (resolve, reject) => update_venue(venue,resolve,reject) );
+        prom.then( result => get_theaters() )
+        break;
+
+      case 3:   //new
+        var prom = new Promise( (resolve, reject) => add_venue(venue,resolve,reject) );
+        prom
+        .then( result => {
+          venue.vid=result;
+          var prom2 = new Promise( (resolve, reject) => associate_venue(venue,resolve,reject) );
+          prom2.then( result => get_theaters() )
+        })
+        break;
+
+      case 4: //delete
+        venue.vid=body.vid;
+        var prom = new Promise( (resolve, reject) => delete_venue(venue,resolve,reject) );
+        prom.then( result => get_theaters() )
+        break;
     }
+  }
 
-
-    function step3(){
-      console.log('starting step 3');
-      if (_lyrics===0 && _lfirst && _llast){
-          Artists.create({
-              fname: _lfirst,
-              lname: _llast
-          })
-          .then( artist => {
-            _lyricid = artist.dataValues.id;
-            console.log('finishing step 3');
-            step4()
-          }).catch( err => console.log(err));
-      } else if (_lyrics !== '0'){
-        _lyricid=_lyrics;
-        console.log('finishing step 3');
-        step4();
-      } else {
-        console.log('finishing step 3');
-        step4();
-      }
-    }
-
-    function step4(){
-      console.log('starting step 4');
-      if (_pw===0 && _pwfirst && _pwlast){
-          Artists.create({
-              fname: _pwfirst,
-              lname: _pwlast
-          })
-          .then( artist => {
-            _pwid = artist.dataValues.id;
-            console.log('finishing step 4');
-            step5();
-          }).catch( err => console.log(err));
-      } else if (_pw!==0){
-        _pwid=_pw;
-        console.log('finishing step 4');
-        step5();
-      } else {
-        console.log('finishing step 4');
-        step5();
-      }
-    };
-
-    function step5() {
-        console.log('starting step 5');
-         Shows.create(
-          {
-            title:_title,
-            genre:_genre,
-            book: _bookid,
-            music: _musicid,
-            lyrics: _lyricid,
-            playwright: _pwid
-          })
-         .then(function(json){
-          make_form();
-         })
-         .catch(function (err) {
-            console.log(err);
-         });
-    }
-  };
-});
-
-/*
-const readInterface = readline.createInterface({
-    input: fs.createReadStream('./data/california.csv'),
-    output: process.stdout,
-    console: false
-});
-
-readInterface.on('line', function(line) {
-  var items = line.split('|');
-  Theaters
-    .findOrCreate({where: {
-                            name: items[0],
-                            city: items[2],
-                            state: items[3]
-                          },
-                  defaults: {
-                              address1: items[1],
-                              //address2: items[2],
-                              zip: items[4],
-                              website: items[5],
-                              email: items[6],
-                              "createdAt":Date.now(),
-                              "updatedAt":Date.now()
-                            }
+  function get_theaters(){
+    var _venues={};
+    var a = q.venues_by_theater(venue.tid);
+    var b = q.venues_all();
+    var pool = new Pool(creds);
+    pool.query(a, (err, _res) => {
+      _venues.byTheater=_res.rows;
+      pool.query(b, (err, _res) => {
+        pool.end();
+        _venues.all=_res.rows;
+        res.json(_venues)
+      })
     })
-    .then(([user, created]) => {
-      console.log(user.get({
-        plain: true
-      }))
-      console.log(created)
+  }
+})
+
+function delete_venue(venue, resolve, reject){
+  var vsq=q.venue_delete(venue);
+  var pool = new Pool(creds);
+  pool.query(vsq, (err, _res) => {
+    pool.end();
+    resolve('ok')
+  })
+}
+
+function update_venue(venue, resolve, reject ){
+  var vsq=q.venue_update(venue);
+  console.log(vsq)
+  var pool = new Pool(creds);
+  pool.query(vsq, (err, _res) => {
+    pool.end();
+    resolve(_res.rows[0])
+  })
+}
+
+function add_venue(venue, resolve, reject ){
+  var vsq=q.venue_save(venue);
+  var pool = new Pool(creds);
+  pool.query(vsq, (err, _res) => {
+    pool.end();
+    resolve(_res.rows[0].id);
+  })
+}
+
+function associate_venue(venue, resolve, reject){
+  var query=q.venue_theater_save(venue) ;
+  var poolx = new Pool(creds);
+  poolx.query(query, (err, _res) => {
+    poolx.end();
+    resolve(_res.rows[0].theater_venue_id);
+  })
+}
+
+function get_city(city,state_id,resolve,reject){
+  var pool = new Pool(creds);
+  var cityg=q.city_get(city,state_id);
+  pool.query(cityg, (err, _res) => {
+    if (_res.rowCount === 0) {
+      citys=q.city_save(city,state_id);
+      pool.query(citys, (err, _res) => {
+        pool.end();
+        console.log(_res.rows[0])
+        resolve(_res.rows[0].city_id)
+      })
+    } else {
+      pool.end();
+      resolve(_res.rows[0].city_id);
+    }
+  })
+}
+
+app.post('/addartist', jsonParser, (req,res) => {
+  const body=req.body;
+  const data={ fname: body.fname.replace(/'/g, "''"), lname: body.lname.replace(/'/g, "''")   }
+  var query=q.artist_save( data );
+  if (body.editmode && body.artist_id !=='0'){
+    query=q.artist_update( data );
+  }
+  console.log(query);
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    var newID=_res.rows[0].id;
+    const prom = new Promise( (resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
+    prom.then( data => res.json({ newID, artists: data }) )
+    return;
+  })
+})
+
+app.post('/addshow', jsonParser, (req,res) => {
+  const body=req.body;
+  const show={ description: '' };
+  (body.show_title_1) ? show.title=body.show_title_1.replace(/'/g, "''") : show.title="";
+  (body.genre_1) ? show.genre=body.genre_1 : show.genre=2;
+  var pool = new Pool(creds);
+  var query=q.show_save(show);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    const artists = process_artists( body )
+    const show_promise = new Promise( (resolve, reject) => save_artists( artists, _res.rows[0].id, null, resolve, reject ) );
+    show_promise
+    .then( done => {
+      const prom1 = new Promise( (resolve, reject ) => get_data( 'all_shows', null, resolve, reject ) );
+      const prom2 = new Promise( (resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
+      Promise.all([prom1,prom2])
+      .then( data => {
+        res.json({ shows: data[0], artists: data[1] })
+      })
     })
+  });
+})
+
+app.post('/editshow', jsonParser, (req,res) => {
+  const body=req.body;
+  const sid=parseInt(body.show_id);
+  const show={  title: body.show_title.replace(/'/g, "''"),
+                genre: parseInt(body.genre_1),
+                description: '',
+                show_id: sid
+              };
+  const query = q.show_update( show );
+  const artists = process_artists( body )
+  const show_promise = new Promise( (resolve, reject) => save_artists( artists, sid, null, resolve, reject ) );
+  show_promise.then( done => {
+    var pool = new Pool(creds);
+    pool.query(query, (err, _res) => {
+      pool.end();
+      const prom1 = new Promise( (resolve, reject ) => get_data( 'all_shows', null, resolve, reject ) );
+      const prom2 = new Promise( (resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
+      Promise.all([prom1,prom2])
+      .then( data => {
+        res.json({ shows: data[0], artists: data[1] })
+      })
+    })
+  })
+})
+
+app.post('/addprod', jsonParser, (req,res) => {
+  const body=req.body;
+  var theater_id;
+  for (key in body) if (body[key]==='Submit Production') theater_id=key;
+
+  const prod = {};
+  prod.theater_id=theater_id;
+  prod.start_date=body.start_date_1;
+  prod.end_date=body.end_date_1;
+  (body.cast_1) ? prod.cast_list=body.cast_1 : prod.cast_list='';
+  (body.description_1) ? prod.description=body.description_1.replace(/'/g, "''") : prod.description='';
+  (body.show_select) ? prod.show_id=body.show_select : prod.show_id=null;
+  (body.venue_by_theater) ? prod.venue_id=body.venue_by_theater : prod.venue_id=null;
+
+  var pool = new Pool(creds);
+  var query=q.production_save(prod);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    let production_id=_res.rows[0].production_id;
+    const artists = process_artists( body )
+    const save_them = new Promise ( (resolve,reject) => save_artists (artists, null, production_id, resolve, reject ) );
+    pool=new Pool(creds);
+    var query=q.production(production_id);
+    pool.query(query, (err, _res) => {
+      var new_prod = _res.rows[0];
+      pool.end();
+      res.json(_res.rows[0]);
+    })
+  });
 });
-*/
 
 
-// var i;
-// var sec = 1;
-// for (i = 11; i <=21; i++) {
-//     var _i = i;
-//     var secs=sec*3000;
-//     setTimeout(function(){
-//       doit(_i);
-//     }, secs);
-//     sec++;
-// }
+app.post('/editprod', jsonParser, (req,res) => {
+  const body=req.body;
+  const pid=parseInt(body.prod_id);
+  const prod={
+                prod_id: pid,
+                show_id: (body.show_select) ? parseInt(body.show_select) : null,
+                venue_id: (body.venue_by_theater) ? parseInt(body.venue_by_theater) : null,
+                start_date: (body.start_date_1) ? body.start_date_1 : '',
+                end_date: (body.end_date_1) ? body.end_date_1 : '',
+                cast_list: (body.cast_1) ? body.cast_1.replace(/'/g, "''") : '',
+                description: (body.description_1) ? body.description_1.replace(/'/g, "''") : '',
+              };
+  const query = q.production_update( prod );
+  const artists = process_artists( body )
+  const show_promise = new Promise( (resolve, reject) => save_artists( artists, null, pid, resolve, reject ) );
+  show_promise.then( done => {
+    var pool = new Pool(creds);
+    pool.query(query, (err, _res) => {
+      var query=q.production(pid);
+      console.log('query',query)
+      pool.query(query, (err, _res) => {
+        pool.end();
+        res.json(_res.rows[0]);
+      })
+    })
+  })
+})
 
+app.post('/remove_artist', jsonParser, (req,res) => {
+  const body=req.body;
+  var tb;
+  switch (body.type){
+    case 'book':
+      tb='book'
+      break;
+    case 'music':
+      tb='music';
+      break;
+    case 'lyrics':
+      tb='lyrics';
+      break;
+    case 'pw':
+      tb='playwright';
+      break;
+    case 'dir':
+      tb='directors';
+      break;
+    case 'chor':
+      tb='choreographers';
+      break;
+    case 'md':
+      tb='music_directors';
+      break;
+  }
+  const data={  artist_id: body.artist_id,
+                table_name: tb,
+                field_name: body.assoc,
+                assoc_id: body.assoc_id
+              }
+  console.log('DATA',data)
 
+  let query=q.unassociate_artist(data);
+  console.log('DELETE',query)
+  var pool = new Pool(creds);
+    pool.query(query, (err, _res) => {
+      pool.end();
+      res.json('ok');
+    });
+})
 
+function save_artists (artists, show_id, production_id, resolve, reject){
+      const all_promises=[];
+      for (key in artists){
+      let arr = artists[key];
 
+      arr.forEach( item => {
+        let field='show_id', associaton_id=show_id,date=true,return_id=`${key}_id`;
+        if ( key === 'directors' || key === 'choreographers' || key === 'music_directors'){
+          field='production_id';
+          associaton_id=production_id;
+          date=false;
+          return_id=`${key.slice(0, key.length-1)}_id`;
+        }
+        if (item.id){
+          var query=q.check_artist_association( key, field, item.id, associaton_id );
+          const check = new Promise( (resolve2, reject2) => exists(query, key, resolve2, reject2) );
+          check.then( data => {
+            if (data.exists) {
+              resolve(data)
+            } else {
+              var query2=q.artist_to_show( data.table, field, item.id, associaton_id );
+              associate(query2);
+            }
+          })
+        } else {
+          var query1=q.artist_save( item, date );
+          let this_key=key;
+          const artist_promise = new Promise( (resolve1, reject1) => create(query1, resolve1, reject1) );
+          all_promises.push(artist_promise);
+          artist_promise
+          .then( aid => {
+            var query2=q.artist_to_show( this_key, field, aid, associaton_id );
+            const ass_prom = new Promise ( (resolve, reject) => associate(query2, resolve, reject) );
+            all_promises.push(ass_prom);
+          })
+        }
+      })
+    }
+    Promise.all(all_promises).then( res => {
+      resolve('ok');
+    })
 
-// var addr = 'input=The Vintage Theatre Company, LLC Clarksburg WV';
+    function exists(q, table, resolve2, reject2){
+      var pool = new Pool(creds);
+      pool.query(q, (err, _res) => {
+        pool.end();
+        if (_res.rows.length >0){
+          resolve2( { exists: true } )
+        } else {
+          resolve2( { exists: false, table } )
+        }
+        return;
+      })
+    }
 
-// addr = addr.replace(/\s/g, '%20');
+    function create(q, resolve1, reject1){
+      var pool = new Pool(creds);
+      pool.query(q, (err, _res) => {
+        pool.end();
+        resolve( _res.rows[0].id );
+        return;
+      })
+    }
 
-// var url= gurl+addr+type+fields+key;
+    function associate(q){
+      var pool = new Pool(creds);
+      pool.query(q, (err, _res) => {
+        pool.end();
+        if (_res.rows) {
+          resolve( _res.rows[0] )
+        } else {
+          reject('no record')
+        }
+      })
+    }
+}
 
+function process_artists(body){
+  const artist_ids={};
+  const body_keys = Object.keys(body);
+  const book=[], lyrics=[], music=[], playwright=[], directors=[], choreographers=[], music_directors=[];
 
+  body_keys.forEach( key => {
 
+    let k = key.split('_');
 
+    switch (k[0]){
+      case "sel":
+      case "fname":
+      case "lname":
+        step2(key, k[0],k[1],parseInt(k[2]-1))
+        break;
+      default:
+        break;
+    }
 
-// {
-//     "candidates": [
-//         {
-//             "formatted_address": "305 Washington Ave, Clarksburg, WV 26301, USA",
-//             "geometry": {
-//                 "location": {
-//                     "lat": 39.278085,
-//                     "lng": -80.33967899999999
-//                    },
-//                 "viewport": {
-//                     "northeast": {
-//                         "lat": 39.27952452989271,
-//                         "lng": -80.33828427010727
-//                     },
-//                     "southwest": {
-//                         "lat": 39.27682487010727,
-//                         "lng": -80.34098392989272
-//                     }
-//                 }
-//             },
-//             "name": "The Vintage Theatre Company, LLC",
-//             "place_id": "ChIJo9yUXLxpSogRdb3cpggyYFQ"
-//         }
-//     ],
-//     "status": "OK"
-// }
+    function step2 (key, t, a, i){
+      switch (a){
+        case "book":
+          step3(book,key,t,i);
+          break;
+        case "music":
+          step3(music,key,t,i);
+          break;
+        case "lyrics":
+          step3(lyrics,key,t,i);
+          break;
+        case "pw":
+          step3(playwright,key,t,i);
+          break;
+        case "dir":
+          step3(directors,key,t,i);
+          break;
+        case "chor":
+          step3(choreographers,key,t,i);
+          break;
+        case "md":
+          step3(music_directors,key,t,i);
+          break;
+        default:
+      }
+    }
 
+    function step3 (arr, key, t, i){
+      if (t==='sel') {
+        arr[i]={ id : body[key] };
+      } else if (t==='fname') {
+        (arr[i]) ? arr[i].fname=body[key] : arr[i]={ fname : body[key] };
+      } else if (t==='lname') {
+        (arr[i]) ? arr[i].lname=body[key] : arr[i]={ lname : body[key] };
+      }
+    }
 
-
-/*fetch('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', { method: 'POST', body: params })
-    .then(res => res.json())
-    .then(json => alert(json));
-
-  */
-
-
-
-    // var record=parseInt(req.query.file);
-
-    // var updated_data;
-
-    // var _thisid = record;
-    // Theaters.findOne({
-    //     where: { id: _thisid }
-    //   })
-    // .then( thtr => {
-    //   var t = thtr.dataValues;
-    //   if (!t.place_id) return;
-    //   var pid='placeid='+t.place_id;
-    //   var url= gurl+pid+fields+key;
-
-
-    //     fetch(url, {method: 'POST'})
-    //       .then( res => res.json() )
-    //       .then( function(json){
-    //         var item = json.result;
-    //         if (!item) return;
-    //         var phone = item.formatted_phone_number;
-    //         var website = item.website;
-
-    //         var update_cols = {
-    //               'phone':phone,
-    //               'website':website
-    //         };
-    //          Theaters.update( update_cols,
-    //            { returning: true, where: { id: _thisid }
-    //          })
-    //          .then(function(json){
-    //           console.log(json[1][0].dataValues);
-    //           var data = json[1][0].dataValues;
-    //           updated_data=JSON.stringify(data);
-    //          })
-    //          .catch(function (err) {
-    //             console.log(err);
-    //          })
-
-      //States.findOne({ where : { id : t.state }})
-      //.then ( sta => {
-
-        //var addr = 'input='+thtr.name+' '+thtr.city+' '+sta.dataValues.name;
-        //addr = addr.replace(/\s/g, '%20');
-        //addr = addr.replace(/\'/g, '');
-        //var url= gurl+addr+type+fields+key;
-        // fetch(url, {method: 'POST'})
-        //   .then( res => res.json() )
-        //   .then( function(json){
-        //     var item = json.candidates[0];
-        //     if (!item) return;
-        //     var tempadd = tempadd=item.formatted_address;
-        //     var add_arr = tempadd.split(',');
-        //     var street=add_arr[0], zip=add_arr[2];
-        //     zip = zip.substr(4);
-        //     var geo = item.geometry;
-        //     var loc = geo.location;
-        //     var view = geo.viewport;
-        //     var ne=view.northeast;
-        //     var sw=view.southwest;
-
-        //     var update_cols = {
-        //           'name_alt':item.name,
-        //           'zip':zip,
-        //           'place_id':item.place_id,
-        //           'formatted_address':item.formatted_address,
-        //           'address1':street,
-        //           'location_lat':String(loc.lat),
-        //           'location_lng':String(loc.lng),
-        //           'viewport_ne_lat':String(ne.lat),
-        //           'viewport_ne_lng':String(ne.lng),
-        //           'viewport_sw_lat':String(sw.lat),
-        //           'viewport_sw_lng':String(sw.lng)
-        //     };
-        //      Theaters.update( update_cols,
-        //        { returning: true, where: { id: _thisid }
-        //      })
-        //      .then(function(json){
-        //       console.log(json[1][0].dataValues);
-        //       var data = json[1][0].dataValues;
-        //       updated_data=JSON.stringify(data);
-        //      })
-        //      .catch(function (err) {
-        //         console.log(err);
-        //      })
-
-          //});
-    //   })
-    // })
-
-    // res.send('<form><input type="text" name="file" value="'+(record+1)+'""></input><button type="submit">Submit</button></form><p></p>');
-
-
-// });
+  })
+  return { book, lyrics, music, playwright, directors, choreographers, music_directors  }
+}
 
 app.listen(PORT, () => {
   console.log(`listening on ${PORT}`);

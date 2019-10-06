@@ -1,52 +1,54 @@
-INSERT INTO states (name,"createdAt","updatedAt")
-VALUES ('Alabama',now(),now()),
-('Alaska',now(),now()),
-('Arizona',now(),now()),
-('Arkansas',now(),now()),
-('California',now(),now()),
-('Colorado',now(),now()),
-('Connecticut',now(),now()),
-('Delaware',now(),now()),
-('District of Columbia',now(),now()),
-('Florida',now(),now()),
-('Georgia',now(),now()),
-('Hawaii',now(),now()),
-('Idaho',now(),now()),
-('Illinois',now(),now()),
-('Indiana',now(),now()),
-('Iowa',now(),now()),
-('Kansas',now(),now()),
-('Kentucky',now(),now()),
-('Louisiana',now(),now()),
-('Maine',now(),now()),
-('Maryland',now(),now()),
-('Massachusetts',now(),now()),
-('Michigan',now(),now()),
-('Minnesota',now(),now()),
-('Mississippi',now(),now()),
-('Missouri',now(),now()),
-('Montana',now(),now()),
-('Nebraska',now(),now()),
-('Nevada',now(),now()),
-('New Hampshire',now(),now()),
-('New Jersey',now(),now()),
-('New Mexico',now(),now()),
-('New York',now(),now()),
-('North Carolina',now(),now()),
-('North Dakota',now(),now()),
-('Ohio',now(),now()),
-('Oklahoma',now(),now()),
-('Oregon',now(),now()),
-('Pennsylvania',now(),now()),
-('Rhode Island',now(),now()),
-('South Carolina',now(),now()),
-('South Dakota',now(),now()),
-('Tennessee',now(),now()),
-('Texas',now(),now()),
-('Utah',now(),now()),
-('Vermont',now(),now()),
-('Virginia',now(),now()),
-('Washington',now(),now()),
-('West Virginia',now(),now()),
-('Wisconsin',now(),now()),
-('Wyoming',now(),now());
+UPDATE states SET abbr='AL' where name='Alabama';
+
+
+
+UPDATE states SET abbr='AK' WHERE name='Alaska';
+UPDATE states SET abbr='AZ' WHERE name='Arizona';
+UPDATE states SET abbr='AR' WHERE name='Arkansas';
+UPDATE states SET abbr='CA' WHERE name='California';
+UPDATE states SET abbr='CO' WHERE name='Colorado';
+UPDATE states SET abbr='CT' WHERE name='Connecticut';
+UPDATE states SET abbr='DE' WHERE name='Delaware';
+UPDATE states SET abbr='DC' WHERE name='District of Columbia';
+UPDATE states SET abbr='FL' WHERE name='Florida';
+UPDATE states SET abbr='GA' WHERE name='Georgia';
+UPDATE states SET abbr='HI' WHERE name='Hawaii';
+UPDATE states SET abbr='ID' WHERE name='Idaho';
+UPDATE states SET abbr='IL' WHERE name='Illinois';
+UPDATE states SET abbr='IN' WHERE name='Indiana';
+UPDATE states SET abbr='IA' WHERE name='Iowa';
+UPDATE states SET abbr='KS' WHERE name='Kansas';
+UPDATE states SET abbr='KY' WHERE name='Kentucky';
+UPDATE states SET abbr='LA' WHERE name='Louisiana';
+UPDATE states SET abbr='ME' WHERE name='Maine';
+UPDATE states SET abbr='MD' WHERE name='Maryland';
+UPDATE states SET abbr='MA' WHERE name='Massachusetts';
+UPDATE states SET abbr='MI' WHERE name='Michigan';
+UPDATE states SET abbr='MN' WHERE name='Minnesota';
+UPDATE states SET abbr='MS' WHERE name='Mississippi';
+UPDATE states SET abbr='MO' WHERE name='Missouri';
+UPDATE states SET abbr='MT' WHERE name='Montana';
+UPDATE states SET abbr='NE' WHERE name='Nebraska';
+UPDATE states SET abbr='NV' WHERE name='Nevada';
+UPDATE states SET abbr='NH' WHERE name='New Hampshire';
+UPDATE states SET abbr='NJ' WHERE name='New Jersey';
+UPDATE states SET abbr='NM' WHERE name='New Mexico';
+UPDATE states SET abbr='NY' WHERE name='New York';
+UPDATE states SET abbr='NC' WHERE name='North Carolina';
+UPDATE states SET abbr='ND' WHERE name='North Dakota';
+UPDATE states SET abbr='OH' WHERE name='Ohio';
+UPDATE states SET abbr='OK' WHERE name='Oklahoma';
+UPDATE states SET abbr='OR' WHERE name='Oregon';
+UPDATE states SET abbr='PA' WHERE name='Pennsylvania';
+UPDATE states SET abbr='RI' WHERE name='Rhode Island';
+UPDATE states SET abbr='SC' WHERE name='South Carolina';
+UPDATE states SET abbr='SD' WHERE name='South Dakota';
+UPDATE states SET abbr='TN' WHERE name='Tennessee';
+UPDATE states SET abbr='TX' WHERE name='Texas';
+UPDATE states SET abbr='UT' WHERE name='Utah';
+UPDATE states SET abbr='VT' WHERE name='Vermont';
+UPDATE states SET abbr='VA' WHERE name='Virginia';
+UPDATE states SET abbr='WA' WHERE name='Washington';
+UPDATE states SET abbr='WV' WHERE name='West Virginia';
+UPDATE states SET abbr='WI' WHERE name='Wisconsin';
+UPDATE states SET abbr='WY' WHERE name='Wyoming';
