@@ -3,7 +3,7 @@ const passport = require('passport');
 const bcrypt = require('bcrypt');
 const LocalStrategy = require('passport-local').Strategy;
 const q = require('./queries/queries.js');
-const tokens = require('./auth/tokens.js');
+const tokens = require('./constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 

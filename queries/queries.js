@@ -1,99 +1,83 @@
 module.exports = {
 
-  get_user: function(username,password){
-    return `SELECT * FROM logins WHERE username=${username};`
+  get_user: function(){
+    return `SELECT l.*, t.id as tid
+            FROM logins l
+            LEFT OUTER JOIN theaters t on l.token=t.token
+            WHERE username=$1;`
   },
 
-  create_user: function(u){
-    return `INSERT INTO logins (
-              username,
-              password,
-              token,
-              level,
-              fname,
-              lname,
-              role,
-              email,
-              phone
-            ) VALUES (
-              '${u.username}',
-              '${u.password}',
-              '${u.token}',
-              ${u.level},
-              '${u.fname}',
-              '${u.lname}',
-              '${u.role}',
-              '${u.email}',
-              '${u.phone}'
-            )
+  create_user: function(){
+    return `INSERT INTO logins (username,password,token,level,fname,lname,role,phone)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
           returning *;`
   },
 
   location_search : function(d){
     return `SELECT a.* FROM (SELECT t.id, t.name, t.city, s.abbr, (
-                3959 * acos ( cos ( radians(${d.location_lat}) ) * cos( radians( CAST(t.location_lat AS DOUBLE PRECISION) ) )
-                  * cos( radians( CAST(t.location_lng AS DOUBLE PRECISION) ) - radians(${d.location_lng}) ) + sin ( radians(${d.location_lat}) )
+                3959 * acos ( cos ( radians($1) ) * cos( radians( CAST(t.location_lat AS DOUBLE PRECISION) ) )
+                  * cos( radians( CAST(t.location_lng AS DOUBLE PRECISION) ) - radians($2) ) + sin ( radians($1) )
                   * sin( radians( CAST(t.location_lat AS DOUBLE PRECISION) ) ))) AS distance
             FROM theaters t
             JOIN states s on t.state=s.id
-            WHERE t.location_lng !='' and t.location_lat !='' ORDER BY distance LIMIT 100 ) as a WHERE a.distance < ${d.distance};`
+            WHERE t.location_lng !='' and t.location_lat !='' ORDER BY distance LIMIT 100 ) as a WHERE a.distance < $3;`
   },
 
-  geometry_save : function(d){
+  geometry_save : function(){
     return `update cities set
-            location_lat='${d.location_lat}',
-            location_lng='${d.location_lng}',
-            viewport_ne_lat='${d.viewport_ne_lat}',
-            viewport_ne_lng='${d.viewport_ne_lng}',
-            viewport_sw_lat='${d.viewport_sw_lat}',
-            viewport_sw_lng='${d.viewport_sw_lng}'
-            where city_id=${d.city_id} returning *;`
+            location_lat=$1,
+              location_lng=$2,
+              viewport_ne_lat=$3,
+              viewport_ne_lng=$4,
+              viewport_sw_lat=$5,
+              viewport_sw_lng=$6
+            where city_id=$7
+            returning *;`
   },
 
   state_get : function(id){
     return `select * from states where id=${id};`
   },
 
-  city_get : function(city,state){
+  city_get : function(){
     return `select s.name as state_name, s.abbr as state_abbr, c.* from cities c
             join states s on c.state_id=s.id
-            where c.name='${city}' and c.state_id=${state};`
+            where c.name=$1 and c.state_id=$2;`
   },
 
   city_save : function(city,state){
-    return `insert into cities (name,state_id) values('${city}',${state}) returning *;`
+    return `insert into cities (name,state_id) values($1,$2) returning *;`
   },
 
-  artist_save: function( artist ){
+  artist_save: function(){
     return `INSERT INTO artists
             (fname,lname,"createdAt","updatedAt")
-            VALUES('${artist.fname}','${artist.lname}',now(),now() )
+            VALUES($1,$2}',now(),now() )
             returning *;`;
   },
 
   artist_update: function( artist ){
     return `UPDATE artists
-            SET fname='${artist.fname}', lname='${artist.lname}', "updatedAt"=now()
-            WHERE id=${artist.artist_id}
+            SET fname=$1, lname=$2, "updatedAt"=now()
+            WHERE id=$3
             returning *;`;
   },
 
-  artist_to_show: function(table,field,artist_id,association_id){
+  artist_to_show: function(table,field){
     return `INSERT INTO ${table}
             (artist_id,${field})
-            VALUES(${artist_id},${association_id})
+            VALUES($1,$2)
             returning *;`;
   },
 
   unassociate_artist: function(a){
     return `DELETE FROM ${a.table_name}
-            WHERE artist_id=${a.artist_id}
-              AND ${a.field_name}_id=${a.assoc_id}
+            WHERE artist_id=$1 AND ${a.field_name}_id=$2
             RETURNING *;`;
   },
 
-  check_artist_association: function(table,field,artist_id,association_id){
-    return `SELECT * FROM ${table} WHERE artist_id=${artist_id} AND ${field}=${association_id};`;
+  check_artist_association: function(table,field){
+    return `SELECT * FROM ${table} WHERE artist_id=$1 AND ${field}=$2;`;
   },
 
   artist: function(id,table,table2,id2){
@@ -105,7 +89,7 @@ module.exports = {
             FROM ${table} a1
             JOIN ${table2}s s on a1.${table2}_id=s.${id2}
             JOIN artists a2 on a1.artist_id=a2.id
-            WHERE s.${id2}=${id};`;
+            WHERE s.${id2}=$1;`;
   },
 
   staff : function(type){
@@ -135,22 +119,22 @@ module.exports = {
     return `SELECT id, name, abbr FROM states order by name;`;
   },
 
-  show_save: function (s) {
+  show_save: function() {
     return `INSERT INTO shows (title,genre,description,"createdAt","updatedAt")
-            VALUES( '${s.title}', ${s.genre}, '${s.description}', now(),now() ) returning *;`;
+            VALUES( $1, $2, $3, now(),now() ) returning *;`;
   },
 
-  show_update: function (s) {
+  show_update: function() {
     return `UPDATE shows SET
-              title='${s.title}',
-              genre=${s.genre},
-              description='${s.description}',
+              title=$1,
+              genre=$2,
+              description=$3,
               "updatedAt"=now()
-            WHERE id=${s.show_id}
+            WHERE id=$4
             RETURNING *;`;
   },
 
-  shows: function (){
+  shows: function(){
     return `SELECT
         s.id,
         s.title,
@@ -169,46 +153,50 @@ module.exports = {
       where s.id=${id};`;
   },
 
-  theater:  function (id){
+  theater:  function(){
     return `SELECT
       t.*,
       st1.name as theater_state
       FROM theaters t
       LEFT OUTER JOIN states st1 on t.state=st1.id
-      WHERE t.id=${id};`
+      WHERE t.id=$1;`;
   },
 
 
   theater_update:  function (t){
     return `UPDATE theaters SET
-          ${t.field}='${t.value}',
+          ${t.field}=$1,
           "updatedAt"=now()
-        WHERE id=${t.theater_id}
+        WHERE id=$2
         returning *`
+  },
+
+  theater_by_token: function(){
+    return `SELECT * FROM theaters WHERE id=$1;`;
   },
 
 
   production_save: function(p){
     return `INSERT INTO productions
             ( theater_id, show_id, venue_id, start_date, end_date, cast_list, description )
-            VALUES( ${p.theater_id}, ${p.show_id}, ${p.venue_id}, '${p.start_date}', '${p.end_date}', '${p.cast_list}', '${p.description}')
+            VALUES($1,$2,$3,$4,$5,$6,$7)
             returning *;`
   },
 
-  production_update: function(p){
+  production_update: function(){
     return `UPDATE productions SET
-              show_id=${p.show_id},
-              venue_id=${p.venue_id},
-              start_date='${(p.start_date!=='') ? p.start_date : null}',
-              end_date='${(p.end_date!=='') ? p.end_date : null }',
-              cast_list='${p.cast_list}',
-              description='${p.description}',
+              show_id=$1,
+              venue_id=$2,
+              start_date=$3,
+              end_date=$4,
+              cast_list=$5,
+              description=$6,
               updated_at=now()
-            WHERE production_id=${p.prod_id}
+            WHERE production_id=$7
             returning *;`
   },
 
-  production: function(id){
+  production: function(){
     return `SELECT p.production_id,
                 p.start_date,
                 p.end_date,
@@ -218,10 +206,10 @@ module.exports = {
                 s.title
           from productions p
           join shows s on p.show_id=s.id
-          where production_id=${id};`;
+          where production_id=$1;`;
   },
 
-  productions:  function(id){
+  productions:  function(){
      return `SELECT
         p.production_id,
         p.start_date,
@@ -236,33 +224,33 @@ module.exports = {
       JOIN theaters t on p.theater_id=t.id
       JOIN shows s on p.show_id=s.id
       JOIN genres g on s.genre=g.id
-      WHERE t.id=${id}
+      WHERE t.id=$1
       order by p.start_date;`;
   },
 
-  venue_theater_save : function(v){
-    return `INSERT INTO theater_venue (theater_id,venue_id) VALUES(${v.tid}, ${v.vid} ) returning *;`;
+  venue_theater_save : function(){
+    return `INSERT INTO theater_venue (theater_id,venue_id) VALUES($1,$2) returning *;`;
   },
 
-  venue_save : function(v){
+  venue_save : function(){
     return `INSERT INTO venues (name,address1,address2,city,zip,phone,directions,"createdAt","updatedAt")
-    VALUES ('${v.name}','${v.address1}','${v.address2}',${v.city_id},'${v.zip}','${v.phone}','${v.directions}',now(),now()) returning *;`
+    VALUES ($1,$2,$3,$4,$5,$6,$7,now(),now()) returning *;`
   },
 
-  venue_update : function(v){
+  venue_update : function(){
     return `UPDATE venues SET
-              name='${v.name}',
-              address1='${v.address1}',
-              address2='${v.address2}',
-              city=${v.city_id},
-              zip='${v.zip}',
-              phone='${v.phone}',
-              directions='${v.directions}'
-            WHERE id=${v.vid} returning *;`;
+              name=$1,
+              address1=$2,
+              address2=$3,
+              city=$4,
+              zip=$5,
+              phone=$6,
+              directions=$7
+            WHERE id=$8 returning *;`;
   },
 
-  venue_delete : function(v){
-    return `DELETE from venues WHERE id=${v.vid};`
+  venue_delete : function(){
+    return `DELETE from venues WHERE id=$1;`
   },
 
   venues: function(id){
@@ -272,7 +260,7 @@ module.exports = {
       where p.production_id=${id};`;
   },
 
-  venues_by_theater: function(id){
+  venues_by_theater: function(){
     return `SELECT
               v.id as venue_id,
               v.name as venue_name,
@@ -289,10 +277,10 @@ module.exports = {
             JOIN venues v on tv.venue_id=v.id
             LEFT OUTER JOIN cities c on v.city=c.city_id
             LEFT OUTER JOIN states s on c.state_id=s.id
-            WHERE t.id=${id};`
+            WHERE t.id=$1;`;
   },
 
-  venue_by_production: function(id){
+  venue_by_production: function(){
     return `SELECT
               p.production_id,
               v.id as venue_id,
@@ -308,7 +296,7 @@ module.exports = {
             JOIN venues v on p.venue_id=v.id
             LEFT OUTER JOIN cities c on v.city=c.city_id
             LEFT OUTER JOIN states s on c.state_id=s.id
-            WHERE p.production_id=${id};`
+            WHERE p.production_id=$1;`;
   },
 
   venues_all: function(){
@@ -326,63 +314,6 @@ module.exports = {
       LEFT OUTER JOIN cities c on v.city=c.city_id
       LEFT OUTER JOIN states st2 on c.state_id=st2.id
       ORDER BY v.name;`;
-  },
-
- artists_show: function(id,context){
-    return `SELECT
-      a.id as id,
-      a.fname as first,
-      a.lname as last
-    FROM shows s
-    LEFT OUTER JOIN ${context} c on s.id=c.show_id
-    LEFT OUTER JOIN artists a on c.artist_id=a.id
-    WHERE s.id=${id};`;
-  },
-
-  theater_data: function(id){
-    return `SELECT t.*,
-      s.title,
-      s1.name as theater_state,
-      g.name as genre,
-      p.production_id,
-      p.start_date,
-      p.end_date,
-      p.cast_list,
-      p.description,
-      ab.fname as book_first,
-      ab.lname as book_last,
-      am.fname as music_first,
-      am.lname as music_last,
-      al.fname as lyr_first,
-      al.lname as lyr_last,
-      ap.fname as pw_first,
-      ap.lname as pw_last,
-      ad.fname as dir_first,
-      ad.lname as dir_last,
-      ac.fname as chor_first,
-      ac.lname as chor_last,
-      v.name as venue_name,
-      v.address1 as venue_address,
-      v.directions as venue_directions
-    FROM theaters t
-    JOIN states s1 on t.state=s1.id
-    LEFT OUTER JOIN productions p on t.id=p.theater_id
-    LEFT OUTER JOIN shows s on p.show_id=s.id
-    LEFT OUTER JOIN genres g on s.genre=g.id
-    LEFT OUTER JOIN venues v on p.venue_id=v.id
-    LEFT OUTER JOIN book b on b.show_id=s.id
-    LEFT OUTER JOIN artists ab on b.artist_id=ab.id
-    LEFT OUTER JOIN music m on m.show_id=s.id
-    LEFT OUTER JOIN artists am on m.artist_id=am.id
-    LEFT OUTER JOIN lyrics l on l.show_id=s.id
-    LEFT OUTER JOIN artists al on m.artist_id=al.id
-    LEFT OUTER JOIN playwright pw on pw.show_id=s.id
-    LEFT OUTER JOIN artists ap on pw.artist_id=ap.id
-    LEFT OUTER JOIN directors d on d.production_id=p.production_id
-    LEFT OUTER JOIN artists ad on d.artist_id=ad.id
-    LEFT OUTER JOIN choreographers c on c.production_id=p.production_id
-    LEFT OUTER JOIN artists ac on c.artist_id=ac.id
-    WHERE t.id=${id}
-    order by p.start_date DESC;`
   }
+
 }
