@@ -14,7 +14,7 @@ base.get('/', (req,res) => {
   prom.then( data => res.json({ data, id }) );
 });
 
-const get_data = (type,id, resolve, reject) => {
+const get_data = ( type, id, resolve, reject ) => {
   var query,val;
   switch (type){
     case 'theater':
@@ -70,5 +70,7 @@ const get_data = (type,id, resolve, reject) => {
     resolve(data);
   });
 }
+
+base.get_data=get_data;
 
 module.exports = base;

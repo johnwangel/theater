@@ -1,6 +1,6 @@
 module.exports = {
 
-  google_api_key : 'AIzaSyAZGoPGDO6X8wdzGey45BG5rIduEmY0X8Q',
+  google_api_key : 'AIzaSyDxfK1dO0hMU_rRzdink3C4JYbaW5T1uIU',
 
   db_creds : {
     user: 'theater_user',

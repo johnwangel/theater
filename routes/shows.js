@@ -2,7 +2,7 @@ var express = require('express');
 var shows = express.Router();
 
 const { get_data } = require('./base');
-const { save_artists } = require('./artists');
+const { save_artists, process_artists } = require('./artists');
 
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');

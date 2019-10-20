@@ -39,4 +39,6 @@ const get_city = (city,state_id,resolve,reject) => {
   })
 }
 
+locations.get_city=get_city;
+
 module.exports = locations;

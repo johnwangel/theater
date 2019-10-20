@@ -52,7 +52,7 @@ module.exports = {
   artist_save: function(){
     return `INSERT INTO artists
             (fname,lname,"createdAt","updatedAt")
-            VALUES($1,$2}',now(),now() )
+            VALUES( $1, $2, now(), now() )
             returning *;`;
   },
 

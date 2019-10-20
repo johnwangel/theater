@@ -41,9 +41,11 @@ artists.get('/',function(req,res){
 });
 
 artists.post('/addartist', jsonParser, (req,res) => {
+
+  console.log(get_data);
+
   const body=req.body;
   const values=[ body.fname.replace(/'/g, "''"), body.lname.replace(/'/g, "''")]
-
   var query=q.artist_save();
   if (body.editmode && body.artist_id !=='0'){
     values.push(body.artist_id);
@@ -53,7 +55,7 @@ artists.post('/addartist', jsonParser, (req,res) => {
   pool.query(query, values, (err, _res) => {
     pool.end();
     var newID=_res.rows[0].id;
-    const prom = new Promise( (resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
+    const prom = new Promise( ( resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
     prom.then( data => res.json( { newID, artists: data } ) )
     return;
   });
@@ -194,7 +196,7 @@ const save_artists = (artists, show_id, production_id, resolve, reject) => {
     }
 }
 
-function process_artists(body){
+const process_artists = (body) => {
   const artist_ids={};
   const body_keys = Object.keys(body);
   const book=[], lyrics=[], music=[], playwright=[], directors=[], choreographers=[], music_directors=[];
@@ -253,5 +255,7 @@ function process_artists(body){
   })
   return { book, lyrics, music, playwright, directors, choreographers, music_directors  }
 }
-
+artists.save_artists=save_artists;
+artists.get_artists=get_artists;
+artists.process_artists=process_artists;
 module.exports = artists;

@@ -82,4 +82,5 @@ function rand(min, max) {
   return Math.ceil(Math.random() * (max - min) + min);
 }
 
+theaters.get_theaters=get_theaters;
 module.exports = theaters;
