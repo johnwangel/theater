@@ -16,6 +16,8 @@ base.get('/', (req,res) => {
 
 const get_data = ( type, id, resolve, reject ) => {
   var query,val;
+
+  console.log(type,id);
   switch (type){
     case 'theater':
       query=q.theater(id);
@@ -61,6 +63,7 @@ const get_data = ( type, id, resolve, reject ) => {
   }
   var pool = new Pool(creds);
   pool.query(query, val, (err, _res) => {
+    console.log(_res);
     if ( _res && _res.rows ){
       var data=_res.rows;
     } else {

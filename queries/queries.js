@@ -116,7 +116,7 @@ module.exports = {
   },
 
   states: function () {
-    return `SELECT id, name, abbr FROM states order by name;`;
+    return `SELECT id, name, abbr FROM states order by abbr;`;
   },
 
   show_save: function() {
@@ -162,6 +162,10 @@ module.exports = {
       WHERE t.id=$1;`;
   },
 
+  add_theater: function(){
+    return `INSERT INTO theaters(name,city,state,"createdAt","updatedAt")
+    VALUES ($1,$2,$3,now(),now()) returning *;`
+  },
 
   theater_update:  function (t){
     return `UPDATE theaters SET
@@ -203,9 +207,11 @@ module.exports = {
                 p.cast_list,
                 p.description,
                 p.show_id,
-                s.title
+                s.title,
+                g.name as genre
           from productions p
           join shows s on p.show_id=s.id
+          join genres g on s.genre=g.id
           where production_id=$1;`;
   },
 

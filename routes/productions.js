@@ -1,7 +1,7 @@
 var express = require('express');
 var prods = express.Router();
 
-const { save_artists } = require('./artists');
+const { save_artists, process_artists } = require('./artists');
 
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
@@ -35,7 +35,7 @@ prods.post('/addprod', jsonParser, (req,res) => {
   prod.start_date=body.start_date_1;
   prod.end_date=body.end_date_1;
   (body.cast_1) ? prod.cast_list=body.cast_1 : prod.cast_list='';
-  (body.description_1) ? prod.description=body.description_1.replace(/'/g, "''") : prod.description='';
+  (body.description_1) ? prod.description=body.description_1.replace(/'/g, "&rsquo;") : prod.description='';
   (body.show_select) ? prod.show_id=body.show_select : prod.show_id=null;
   (body.venue_by_theater) ? prod.venue_id=body.venue_by_theater : prod.venue_id=null;
 
@@ -49,7 +49,7 @@ prods.post('/addprod', jsonParser, (req,res) => {
     const save_them = new Promise ( (resolve,reject) => save_artists (artists, null, production_id, resolve, reject ) );
     pool=new Pool(creds);
     var query=q.production();
-    let val=[production_id]
+    let val=[production_id];
     pool.query(query, val, (err, _res) => {
       var new_prod = _res.rows[0];
       pool.end();
@@ -68,8 +68,8 @@ prods.post('/editprod', jsonParser, (req,res) => {
                 venue_id: (body.venue_by_theater) ? parseInt(body.venue_by_theater) : null,
                 start_date: (body.start_date_1) ? body.start_date_1 : null,
                 end_date: (body.end_date_1) ? body.end_date_1 : null,
-                cast_list: (body.cast_1) ? body.cast_1.replace(/'/g, "''") : '',
-                description: (body.description_1) ? body.description_1.replace(/'/g, "''") : '',
+                cast_list: (body.cast_1) ? body.cast_1.replace(/'/g, "&rsquo;") : '',
+                description: (body.description_1) ? body.description_1.replace(/'/g, "&rsquo;") : '',
               };
 
   const values = [ prod.show_id, prod.venue_id, prod.start_date, prod.end_date, prod.cast_list, prod.description, prod.prod_id  ]

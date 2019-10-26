@@ -31,23 +31,23 @@ venues.post('/updateVenue', jsonParser, (req,res) => {
     cityPromise
     .then( result => {
       venue.city_id=result;
-      process();
+      process(res);
     });
   } else {
-    process();
+    process(res);
   }
 
-  function process(){
+  function process(res){
     switch (body.venue_type){
 
       case 1:  //associate
         var prom = new Promise( (resolve, reject) => associate_venue(venue,resolve,reject) );
-        prom.then( result => get_theaters(venue.tid) )
+        prom.then( result => get_theaters(venue.tid,res) )
         break;
 
       case 2:  //update
         var prom = new Promise( (resolve, reject) => update_venue(venue,resolve,reject) );
-        prom.then( result => get_theaters(venue.tid) )
+        prom.then( result => get_theaters(venue.tid,res) )
         break;
 
       case 3:   //new
@@ -56,14 +56,14 @@ venues.post('/updateVenue', jsonParser, (req,res) => {
         .then( result => {
           venue.vid=result;
           var prom2 = new Promise( (resolve, reject) => associate_venue(venue,resolve,reject) );
-          prom2.then( result => get_theaters(venue.tid) )
+          prom2.then( result => get_theaters(venue.tid,res) )
         })
         break;
 
       case 4: //delete
         venue.vid=body.vid;
         var prom = new Promise( (resolve, reject) => delete_venue(venue,resolve,reject) );
-        prom.then( result => get_theaters(venue.tid) )
+        prom.then( result => get_theaters(venue.tid,res) )
         break;
     }
   }

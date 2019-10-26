@@ -41,9 +41,6 @@ artists.get('/',function(req,res){
 });
 
 artists.post('/addartist', jsonParser, (req,res) => {
-
-  console.log(get_data);
-
   const body=req.body;
   const values=[ body.fname.replace(/'/g, "''"), body.lname.replace(/'/g, "''")]
   var query=q.artist_save();

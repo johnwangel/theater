@@ -16,7 +16,7 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 shows.post('/addshow', jsonParser, (req,res) => {
   const body=req.body;
   const show={ description: '' };
-  (body.show_title_1) ? show.title=body.show_title_1.replace(/'/g, "''") : show.title="";
+  (body.show_title_1) ? show.title=body.show_title_1.replace(/'/g, "&rsquo;") : show.title="";
   (body.genre_1) ? show.genre=body.genre_1 : show.genre=2;
   var pool = new Pool(creds);
   var query=q.show_save(show);
@@ -40,7 +40,7 @@ shows.post('/addshow', jsonParser, (req,res) => {
 shows.post('/editshow', jsonParser, (req,res) => {
   const body=req.body;
   const sid=parseInt(body.show_id);
-  const show={  title: body.show_title.replace(/'/g, "''"),
+  const show={  title: body.show_title.replace(/'/g, "&rsquo;"),
                 genre: parseInt(body.genre_1),
                 description: '',
                 show_id: sid
