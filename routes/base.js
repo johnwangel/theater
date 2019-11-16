@@ -9,6 +9,8 @@ const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 
+console.log('creds',creds);
+
 var pool = new Pool(creds);
 var query = q.theaters_all('100');
 pool.query(query, (err, _res) => {
