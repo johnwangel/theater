@@ -9,19 +9,19 @@ const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 
-console.log('creds',creds);
+// console.log('creds',creds);
 
-var pool = new Pool(creds);
-var query = q.theaters_all('100');
-pool.query(query, (err, _res) => {
-  if ( _res && _res.rows ){
-    var data=_res.rows;
-  } else {
-    data: { error: 'no rows returned' }
-  }
-  pool.end();
-  console.log(data);
-});
+// var pool = new Pool(creds);
+// var query = q.theaters_all('100');
+// pool.query(query, (err, _res) => {
+//   if ( _res && _res.rows ){
+//     var data=_res.rows;
+//   } else {
+//     data: { error: 'no rows returned' }
+//   }
+//   pool.end();
+//   console.log(data);
+// });
 
 base.get('/', (req,res) => {
   var id, type=req.query.type;
