@@ -1,5 +1,40 @@
 module.exports = {
 
+  find_productions_by_show: function(){
+    return `SELECT p.*,
+                s.title,
+                t.name as theater_name,
+                v.name as venue_name,
+                v.*,
+                c.name as city_name,
+                st.name as state_name,
+                st.abbr as state_abbr
+            FROM productions p
+            JOIN shows s on p.show_id=s.id
+            JOIN theaters t on p.theater_id=t.id
+            JOIN venues v on p.venue_id=v.id
+            JOIN cities c on v.city=c.city_id
+            JOIN states st on c.state_id = st.id
+            WHERE s.id = $1;`;
+
+  },
+
+  find_shows: function(){
+    return `SELECT title, id, SIMILARITY(title,$1) as sml
+            FROM shows
+            WHERE LOWER(title) LIKE LOWER($1)
+            ORDER BY sml DESC, title;`
+  },
+
+
+  find_theater: function(){
+    return `SELECT t.name, t.id, t.city, s.abbr, SIMILARITY(t.name,$1) as sml
+            FROM theaters t
+            JOIN states s on t.state=s.id
+            WHERE LOWER(t.name) LIKE LOWER($1)
+            ORDER BY sml DESC, t.name;`
+  },
+
   get_user: function(){
     return `SELECT l.*, t.id as tid
             FROM logins l
@@ -153,6 +188,15 @@ module.exports = {
       where s.id=${id};`;
   },
 
+  theaters_all: function(lim){
+    return `SELECT t.*, s.abbr as state_abbr
+            FROM theaters t
+            JOIN states s on t.state = s.id
+            WHERE t.email is null or t.email = ''
+            ORDER BY t.state, t.name
+            LIMIT ${lim};`;
+  },
+
   theater:  function(){
     return `SELECT
       t.*,
@@ -160,6 +204,10 @@ module.exports = {
       FROM theaters t
       LEFT OUTER JOIN states st1 on t.state=st1.id
       WHERE t.id=$1;`;
+  },
+
+  delete_theater: function(){
+    return `DELETE FROM theaters WHERE id=$1;`;
   },
 
   add_theater: function(){
@@ -172,7 +220,7 @@ module.exports = {
           ${t.field}=$1,
           "updatedAt"=now()
         WHERE id=$2
-        returning *`
+        returning *;`
   },
 
   theater_by_token: function(){

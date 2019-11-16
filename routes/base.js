@@ -1,6 +1,8 @@
 var express = require('express');
 var base = express.Router();
 
+const fetch=require('node-fetch');
+
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
 const tokens = require('../constants/tokens.js');
@@ -19,6 +21,9 @@ const get_data = ( type, id, resolve, reject ) => {
 
   console.log(type,id);
   switch (type){
+    case 'alltheaters':
+      query=q.theaters_all('100');
+      break;
     case 'theater':
       query=q.theater(id);
       val=[id];

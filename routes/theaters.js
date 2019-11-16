@@ -35,6 +35,7 @@ theaters.post('/add_theater', jsonParser, (req,res) => {
   const place = new Promise( (resolve, reject) => getPlace(t, resolve, reject));
   Promise.all([new_theater,token,place])
   .then( values => {
+    console.log('PLACE',values)
     let theater=values[0];
     let place=values[2];
     data.token=values[1];
@@ -75,15 +76,16 @@ function getPlace( t, resolve, reject ){
   var url1='https://maps.googleapis.com/maps/api/place/findplacefromtext/json?';
   var fields1='formatted_address,geometry,place_id';
   var input=`${t.name}%${t.city}%${t.state_name}`
-  var full_url=`${url1}key=${key}&fields=${fields1}&inputtype=textquery&input=${input}`;
+  var full_url=encodeURI(`${url1}key=${key}&fields=${fields1}&inputtype=textquery&input=${input}`);
   var url2='https://maps.googleapis.com/maps/api/place/details/json?';
   var fields2='formatted_phone_number,website';
   let result;
+  console.log(full_url)
   fetch(full_url)
   .then(res => res.json())
   .then( place => {
     result=place.candidates[0];
-    var full_url2=`${url2}key=${key}&fields=${fields2}&inputtype=textquery&placeid=${result.place_id}`;
+    var full_url2=encodeURI(`${url2}key=${key}&fields=${fields2}&inputtype=textquery&placeid=${result.place_id}`);
     fetch(full_url2)
     .then(res2 => res2.json())
     .then( deets => {
@@ -97,7 +99,7 @@ function getPlace( t, resolve, reject ){
 theaters.post('/alter_theater', jsonParser, (req,res) => {
   const th=req.body;
   const update = new Promise( (resolve, reject) => update_theater(th, resolve, reject));
-  update.then( data => res.json({ data }) );
+  update.then( data => res.json({ data }));
 });
 
 function update_theater(th, resolve, reject){
@@ -126,6 +128,17 @@ const get_theaters = ( tid, res ) => {
     });
   });
 };
+
+theaters.post('/delete_theater', jsonParser, (req,res) => {
+  const id=req.body.theater_id;
+    var query = q.delete_theater();
+    var values = [ id ];
+    var pool = new Pool(creds);
+    pool.query(query, values, (err, _res) => {
+      pool.end();
+      res.json({ status: 'ok' });
+    });
+});
 
 function generate_token(resolve, reject){
   let str='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890';

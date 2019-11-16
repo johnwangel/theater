@@ -11,6 +11,34 @@ const creds = tokens.db_creds;
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
+search.post('/ByTheater',jsonParser, (req,res) => {
+  const values=[ `%${req.body.theater}%` ];
+  var pool = new Pool(creds);
+  var search=q.find_theater();
+  pool.query(search, values, (err, _res) => {
+    pool.end();
+    if (err){
+     res.json([]);
+    } else {
+      res.json(_res.rows);
+    }
+  })
+});
+
+search.post('/ByShow',jsonParser, (req,res) => {
+  const values=[ `%${req.body.show}%` ];
+  var pool = new Pool(creds);
+  var search=q.find_shows();
+  pool.query(search, values, (err, _res) => {
+    pool.end();
+    if (err){
+     res.json([]);
+    } else {
+      res.json(_res.rows);
+    }
+  })
+});
+
 search.post('/ByCity',jsonParser, (req,res) => {
   const b=req.body;
   const data={};
@@ -61,9 +89,12 @@ search.post('/ByCity',jsonParser, (req,res) => {
       var pools = new Pool(creds);
       var vals=[data.location_lat,data.location_lng,data.distance];
       pools.query(srch, vals, (err, _res) => {
-        var new_data=_res.rows;
         pools.end();
-        res.json(new_data);
+        if (err){
+         res.json([]);
+        } else {
+          res.json(_res.rows);
+        }
       });
     }
 });
