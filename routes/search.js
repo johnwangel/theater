@@ -29,7 +29,9 @@ search.post('/ByShow',jsonParser, (req,res) => {
   const values=[ `%${req.body.show}%` ];
   var pool = new Pool(creds);
   var search=q.find_shows();
+  console.log('show query',search);
   pool.query(search, values, (err, _res) => {
+    console.log(err, _res);
     pool.end();
     if (err){
      res.json([]);
