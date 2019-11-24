@@ -24,6 +24,8 @@ const creds = tokens.db_creds;
 // });
 
 base.get('/', (req,res) => {
+  console.log('getting to base');
+  if (!req.query.type) res.json({status: 'ok'});
   var id, type=req.query.type;
   req.query.id ? id=req.query.id : id=1;
   const prom = new Promise( (resolve, reject ) => get_data( type, id, resolve, reject ) );
