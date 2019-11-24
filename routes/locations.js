@@ -14,8 +14,9 @@ locations.get('/states',function(req,res){
   var query = q.states();
   var pool = new Pool(creds);
   pool.query(query, (err, _res) => {
-    var data=_res.rows;
     pool.end();
+    if (err) return res.json({ error: err });
+    var data=_res.rows;
     res.json({ data });
     return;
   });
