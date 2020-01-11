@@ -151,7 +151,7 @@ function getUpcoming( t, resolve, reject ){
   var val=[t]
   pool.query(prod, val, (err, _res) => {
     if (err || _res.rows.rowCount === 0 ){
-         resolve(null);
+         resolve([]);
       } else {
          resolve(_res.rows);
       }
