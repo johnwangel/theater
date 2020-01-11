@@ -58,6 +58,17 @@ module.exports = {
             WHERE t.location_lng !='' and t.location_lat !='' ORDER BY distance LIMIT 100 ) as a WHERE a.distance < $3;`
   },
 
+  upcoming_production : function(){
+    return `SELECT p.*, s.*, g.name as genre_name
+            FROM productions p
+            JOIN shows s on p.show_id=s.id
+            JOIN genres g on s.genre=g.id
+            WHERE p.theater_id=$1
+            AND p.end_date > now()
+            ORDER BY p.end_date ASC
+            LIMIT 1;`
+  },
+
   geometry_save : function(){
     return `update cities set
             location_lat=$1,
@@ -200,10 +211,18 @@ module.exports = {
   theater:  function(){
     return `SELECT
       t.*,
+      sp.name as specialty,
       st1.name as theater_state
       FROM theaters t
       LEFT OUTER JOIN states st1 on t.state=st1.id
+      LEFT OUTER JOIN specialty sp on t.specialty_id=sp.id
       WHERE t.id=$1;`;
+  },
+
+  all_specialties: function(){
+    return `SELECT *
+        FROM specialty
+        ORDER BY name;`;
   },
 
   delete_theater: function(){
@@ -216,6 +235,8 @@ module.exports = {
   },
 
   theater_update:  function (t){
+    if (t.field === 'specialty') t.field='specialty_id';
+
     return `UPDATE theaters SET
           ${t.field}=$1,
           "updatedAt"=now()

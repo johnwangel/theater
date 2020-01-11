@@ -35,6 +35,9 @@ app.use('/search', search);
 const shows = require('./routes/shows');
 app.use('/shows', shows);
 
+const specialties = require('./routes/specialties');
+app.use('/specialties', specialties);
+
 const theaters = require('./routes/theaters');
 app.use('/theaters', theaters);
 

@@ -28,12 +28,12 @@ prods.get('/',function(req,res){
 prods.get('/byShow',function(req,res){
   var show_id = [ req.query.id ];
   var query = q.find_productions_by_show();
-  console.log(query)
+  //console.log(query)
 
   var pool = new Pool(creds);
   pool.query(query, show_id, (err, _res) => {
     var data=_res.rows;
-    console.log(data)
+    //console.log(data)
     pool.end();
     res.json({ data });
     return;

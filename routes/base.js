@@ -24,7 +24,6 @@ const creds = tokens.db_creds;
 // });
 
 base.get('/', (req,res) => {
-  console.log('getting to base');
   if (!req.query.type) res.json({status: 'ok'});
   var id, type=req.query.type;
   req.query.id ? id=req.query.id : id=1;
@@ -35,7 +34,7 @@ base.get('/', (req,res) => {
 const get_data = ( type, id, resolve, reject ) => {
   var query,val;
 
-  console.log(type,id);
+  //console.log(type,id);
   switch (type){
     case 'alltheaters':
       query=q.theaters_all('100');
@@ -84,7 +83,7 @@ const get_data = ( type, id, resolve, reject ) => {
   }
   var pool = new Pool(creds);
   pool.query(query, val, (err, _res) => {
-    console.log(_res);
+    //console.log(_res);
     if ( _res && _res.rows ){
       var data=_res.rows;
     } else {

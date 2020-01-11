@@ -99,7 +99,12 @@ function getPlace( t, resolve, reject ){
 theaters.post('/alter_theater', jsonParser, (req,res) => {
   const th=req.body;
   const update = new Promise( (resolve, reject) => update_theater(th, resolve, reject));
-  update.then( data => res.json({ data }));
+  update.then( data1 => {
+    const prom = new Promise( (resolve, reject ) => get_data( 'theater', th.theater_id, resolve, reject ) );
+    prom.then( data => {
+      res.json({ data })
+    });
+  })
 });
 
 function update_theater(th, resolve, reject){
@@ -107,6 +112,9 @@ function update_theater(th, resolve, reject){
   var values = [ th.value, th.theater_id ];
   var pool = new Pool(creds);
   pool.query(query, values, (err, _res) => {
+    if (err) {
+      reject(err);
+    }
     var data=_res.rows;
     pool.end();
     resolve(data);

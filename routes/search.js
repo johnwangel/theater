@@ -29,9 +29,7 @@ search.post('/ByShow',jsonParser, (req,res) => {
   const values=[ `%${req.body.show}%` ];
   var pool = new Pool(creds);
   var search=q.find_shows();
-  console.log('show query',search);
   pool.query(search, values, (err, _res) => {
-    console.log(err, _res);
     pool.end();
     if (err){
      res.json([]);
@@ -95,7 +93,18 @@ search.post('/ByCity',jsonParser, (req,res) => {
         if (err){
          res.json([]);
         } else {
-          res.json(_res.rows);
+          let thtrs=_res.rows;
+          let return_data={ theaters: thtrs };
+          const promise_list=[];
+
+          thtrs.forEach( t => {
+            const promise = new Promise( (resolve, reject ) => getUpcoming( t.id, resolve, reject ) );
+            promise_list.push(promise);
+          })
+          Promise.all(promise_list).then( vals => {
+            return_data.prods=vals;
+            res.json(return_data);
+          })
         }
       });
     }
@@ -134,6 +143,19 @@ function getGeometry(data, resolve, reject){
       (err) ? reject(err) : resolve(_res.rows[0]);
     });
   });
+}
+
+function getUpcoming( t, resolve, reject ){
+  var pool = new Pool(creds);
+  var prod=q.upcoming_production();
+  var val=[t]
+  pool.query(prod, val, (err, _res) => {
+    if (err || _res.rows.rowCount === 0 ){
+         resolve(null);
+      } else {
+         resolve(_res.rows);
+      }
+  })
 }
 
 module.exports = search;
