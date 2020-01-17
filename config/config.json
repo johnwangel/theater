@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "theater_user",
-    "password": "Die4u$",
+    "password": "",
     "database": "johnatkins",
     "host": "127.0.0.1",
     "dialect": "postgres"
@@ -15,7 +15,7 @@
   },
   "production": {
     "username": "theater_user",
-    "password": "Gypsy&123",
+    "password": "",
     "database": "theater_user",
     "host": "127.0.0.1",
     "dialect": "postgres"

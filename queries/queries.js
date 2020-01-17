@@ -389,6 +389,14 @@ module.exports = {
       LEFT OUTER JOIN cities c on v.city=c.city_id
       LEFT OUTER JOIN states st2 on c.state_id=st2.id
       ORDER BY v.name;`;
+  },
+
+  email_save: function(){
+    return `INSERT INTO email(name,email_address,subject,message) VALUES ($1,$2,$3,$4) RETURNING *;`;
+  },
+
+  email_get: function(){
+    return `SELECT * from email WHERE handled = false ORDER BY created_at DESC;`;
   }
 
 }

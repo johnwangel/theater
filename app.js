@@ -23,6 +23,9 @@ app.use('/artists', artists);
 const auth = require('./routes/auth');
 app.use('/auth', auth);
 
+const contact = require('./routes/contact');
+app.use('/contact', contact);
+
 const locations = require('./routes/locations');
 app.use('/locations', locations);
 
