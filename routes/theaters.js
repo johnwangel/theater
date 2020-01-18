@@ -72,10 +72,10 @@ theaters.post('/add_theater', jsonParser, (req,res) => {
   });
 });
 
-function getPlace( t, resolve, reject ){
+function getPlace( t, resolve, reject, submit_name=true ){
   var url1='https://maps.googleapis.com/maps/api/place/findplacefromtext/json?';
   var fields1='formatted_address,geometry,place_id';
-  var input=`${t.name}%${t.city}%${t.state_name}`
+  var input=`${(submit_name)?t.name:''} ${(t.address1)?t.address1:''} ${(t.address1)?t.address2:''} ${t.city} ${t.state_name} ${(t.zip)?t.zip:''}`
   var full_url=encodeURI(`${url1}key=${key}&fields=${fields1}&inputtype=textquery&input=${input}`);
   var url2='https://maps.googleapis.com/maps/api/place/details/json?';
   var fields2='formatted_phone_number,website';
@@ -84,17 +84,65 @@ function getPlace( t, resolve, reject ){
   fetch(full_url)
   .then(res => res.json())
   .then( place => {
+    console.log('place',place)
     result=place.candidates[0];
     var full_url2=encodeURI(`${url2}key=${key}&fields=${fields2}&inputtype=textquery&placeid=${result.place_id}`);
     fetch(full_url2)
     .then(res2 => res2.json())
     .then( deets => {
       var details=deets.result;
+      console.log('details',details)
       Object.keys(details).forEach(key => result[key] = details[key]);
       resolve(result);
     });
   });
 }
+
+theaters.post('/update_geo', jsonParser, (req,res) => {
+  const th=req.body;
+  const tid=th.geo;
+  const values = [th.geo];
+  const query= q.theater();
+
+  var pool = new Pool(creds);
+  pool.query(query, values, (err, _res) => {
+    pool.end();
+    (err) ? res.json({err}) : geo(_res.rows[0]);
+  })
+
+  function geo(data){
+    data.state_name=data.theater_state;
+    const update = new Promise( (resolve, reject) => getPlace(data, resolve, reject, false));
+    update.then( place => {
+      const newdata ={};
+      newdata.formatted_address=place.formatted_address;
+      newdata.phone=place.formatted_phone_number;
+      newdata.formatted_address=place.formatted_address;
+      newdata.place_id=String(place.place_id);
+      newdata.location_lat = String(place.geometry.location.lat);
+      newdata.location_lng = String(place.geometry.location.lng);
+      newdata.viewport_ne_lat = String(place.geometry.viewport.northeast.lat);
+      newdata.viewport_ne_lng = String(place.geometry.viewport.northeast.lng);
+      newdata.viewport_sw_lat = String(place.geometry.viewport.southwest.lat);
+      newdata.viewport_sw_lng = String(place.geometry.viewport.southwest.lng);
+
+      var proms=[];
+      for (_skey in newdata){
+        let t={ field: _skey, value: newdata[_skey], theater_id: tid  };
+        let p=new Promise( (resolve, reject ) => update_theater( t, resolve, reject ));
+        proms.push(p);
+      };
+      Promise.all(proms).then( results => {
+        const prom = new Promise( (resolve, reject ) => get_data( 'theater', tid, resolve, reject ) );
+        prom.then( theater => {
+          console.log('theater',theater)
+          res.json( { theater })
+        });
+      });
+    });
+  }
+});
+
 
 theaters.post('/alter_theater', jsonParser, (req,res) => {
   const th=req.body;
