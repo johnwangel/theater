@@ -48,12 +48,14 @@ search.post('/ByCity',jsonParser, (req,res) => {
   var state = b.state.split('-');
   data.state=state[0];
   data.state_name=state[1];
-
-  let values = [data.city,data.state];
-
-  var pool = new Pool(creds);
   var cityg=q.city_get();
-    pool.query(cityg, values, (err, _res) => {
+  let values = [data.city,data.state];
+  var pool = new Pool(creds);
+  pool.query(cityg, values, (err, _res) => {
+      if (err) {
+        console.log(err);
+        res.json([]);
+      }
       if (_res.rowCount === 0) {
         citys=q.city_save();
         pool.query(citys, values, (err, _res) => {
@@ -68,7 +70,7 @@ search.post('/ByCity',jsonParser, (req,res) => {
         check_geo();
         pool.end();
       }
-    })
+  })
 
     function check_geo(){
       if (data.location_lat && data.location_lng){
@@ -93,8 +95,10 @@ search.post('/ByCity',jsonParser, (req,res) => {
         if (err){
          res.json([]);
         } else {
-          let thtrs=_res.rows;
-          let return_data={ theaters: thtrs };
+          let thtr_count=_res.rowCount;
+          let thtrs=_res.rows.slice(25*b.startAt,25*(b.startAt+1));
+
+          let return_data={ theaters: thtrs, count: thtr_count, startAt: b.startAt };
           const promise_list=[];
 
           thtrs.forEach( t => {
@@ -103,6 +107,7 @@ search.post('/ByCity',jsonParser, (req,res) => {
           })
           Promise.all(promise_list).then( vals => {
             return_data.prods=vals;
+            console.log(return_data)
             res.json(return_data);
           })
         }

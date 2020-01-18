@@ -55,7 +55,7 @@ module.exports = {
                   * sin( radians( CAST(t.location_lat AS DOUBLE PRECISION) ) ))) AS distance
             FROM theaters t
             JOIN states s on t.state=s.id
-            WHERE t.location_lng !='' and t.location_lat !='' ORDER BY distance LIMIT 100 ) as a WHERE a.distance < $3;`
+            WHERE t.location_lng !='' and t.location_lat !='' ORDER BY distance ) as a WHERE a.distance < $3;`
   },
 
   upcoming_production : function(){
