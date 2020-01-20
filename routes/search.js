@@ -13,14 +13,17 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 search.post('/ByTheater',jsonParser, (req,res) => {
   const values=[ `%${req.body.theater}%` ];
-  var pool = new Pool(creds);
   var search=q.find_theater();
+  var pool = new Pool(creds);
   pool.query(search, values, (err, _res) => {
     pool.end();
-    if (err){
-     res.json([]);
+    if (err || _res.rowCount === 0 ){
+     res.json({ theaters: [], count: 0, startAt: req.body.startAt});
     } else {
-      res.json(_res.rows);
+      let thtrs=_res.rows;
+      let thtr_count=_res.rowCount;
+      let return_data={ theaters: thtrs, count: thtr_count, startAt: req.body.startAt };
+      res.json(return_data);
     }
   })
 });
@@ -31,10 +34,13 @@ search.post('/ByShow',jsonParser, (req,res) => {
   var search=q.find_shows();
   pool.query(search, values, (err, _res) => {
     pool.end();
-    if (err){
-     res.json([]);
+    if (err || _res.rowCount === 0 ){
+     res.json({ theaters: [], count: 0, startAt: req.body.startAt});
     } else {
-      res.json(_res.rows);
+      let thtrs=_res.rows;
+      let thtr_count=_res.rowCount;
+      let return_data={ theaters: thtrs, count: thtr_count, startAt: req.body.startAt };
+      res.json(return_data);
     }
   })
 });
@@ -107,7 +113,6 @@ search.post('/ByCity',jsonParser, (req,res) => {
           })
           Promise.all(promise_list).then( vals => {
             return_data.prods=vals;
-            console.log(return_data)
             res.json(return_data);
           })
         }
