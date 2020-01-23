@@ -69,7 +69,8 @@ auth.post('/register', jsonParser, (req, res) => {
     (b.fname)?b.fname:' ',
     (b.lname)?b.lname:' ',
     (b.role)?b.role:' ',
-    (b.phone)?b.phone:' '
+    (b.phone)?b.phone:' ',
+    b.optin
   ];
 
   if (b.token) {
@@ -86,9 +87,9 @@ auth.post('/register', jsonParser, (req, res) => {
     cont();
   }
 
-  const cont = () => {
+  function cont() {
     const prom2 = new Promise( (resolve, reject ) => make_user( values, tid, resolve, reject ) );
-    prom2.then(data => res.json(data))
+    prom2.then(data => res.json(data));
   }
 
 });
@@ -121,16 +122,16 @@ auth.post('/login', jsonParser, ( req, res ) => {
   var pool = new Pool(creds);
   pool.query(query, [req.body.username], ( err, _res ) => {
     pool.end();
-    if ( _res && _res.rows ){
+    if ( _res && _res.rows && _res.rows.length !== 0 ){
       const user=_res.rows[0];
       if(bcrypt.compareSync( req.body.password, user.password )){
         user.jwt=jsonwebtoken.sign( { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid }, 'RESTFULAPIs' );
         return res.json(user);
       } else {
-        res.status(401).json({ message: 'Authentication failed. Wrong password.'});
+        res.json({ message: 'Authentication failed. Wrong password.'});
       }
     } else {
-      res.status(401).json({ message: 'Authentication failed. User not found.'});
+      res.json({ message: 'Authentication failed. User not found.'});
     }
   });
 });

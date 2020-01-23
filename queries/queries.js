@@ -43,8 +43,8 @@ module.exports = {
   },
 
   create_user: function(){
-    return `INSERT INTO logins (username,password,token,level,fname,lname,role,phone)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    return `INSERT INTO logins (username,password,token,level,fname,lname,role,phone,optin)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
           returning *;`
   },
 
