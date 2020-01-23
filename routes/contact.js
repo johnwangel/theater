@@ -38,19 +38,19 @@ contact.get('/', (req, res) => {
 });
 
 
-const send = require('gmail-send')({
-  user: 'info@stagerabbit.com',
-  pass: 'ovlyynujtwhpqhhf',
-  to:   'info@stagerabbit.com',
-  subject: 'test subject',
-});
+// const send = require('gmail-send')({
+//   user: 'info@stagerabbit.com',
+//   pass: 'ovlyynujtwhpqhhf',
+//   to:   'info@stagerabbit.com',
+//   subject: 'test subject',
+// });
 
-send({
-  text:    'gmail-send example 1',
-}, (error, result, fullResult) => {
-  if (error) console.error(error);
-  console.log(result);
-});
+// send({
+//   text:    'gmail-send example 1',
+// }, (error, result, fullResult) => {
+//   if (error) console.error(error);
+//   console.log(result);
+// });
 
 
 
