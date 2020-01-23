@@ -19,6 +19,12 @@ const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 const secret = tokens.secret;
+const send = require('gmail-send')({
+  user: tokens.google.user,
+  pass: tokens.google.pass,
+  to: '',
+  subject: ''
+});
 
 auth.use(
   session({
@@ -132,6 +138,34 @@ auth.post('/login', jsonParser, ( req, res ) => {
       }
     } else {
       res.json({ message: 'Authentication failed. User not found.'});
+    }
+  });
+});
+
+//check login credentials
+auth.post('/reminder', jsonParser, ( req, res ) => {
+  let query=q.get_user();
+  let value = [req.body.username];
+
+  console.log(query, value);
+
+  var pool = new Pool(creds);
+  pool.query(query, [req.body.username], ( err, _res ) => {
+    pool.end();
+    if ( _res && _res.rows && _res.rows.length !== 0 ){
+      send({
+        to: req.body.username,
+        subject: 'StageRabbit: Reset Password',
+        text:    'You have requested to reset your password.',
+      }, (error, result, fullResult) => {
+        if (error) console.error(error);
+        var message = `Instructions for resetting your password have been sent to: ${req.body.username}`;
+        console.log(fullResult, message);
+        res.json({message});
+      });
+    } else {
+      console.log('error')
+      res.json({ message: 'User not found.'});
     }
   });
 });
