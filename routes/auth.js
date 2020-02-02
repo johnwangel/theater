@@ -9,6 +9,7 @@ const client = redis.createClient();
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require("jsonwebtoken");
 const bodyParser = require('body-parser');
+const Moment = require('moment');
 const saltRounds = 10;
 
 require('../passport')();
@@ -142,33 +143,73 @@ auth.post('/login', jsonParser, ( req, res ) => {
   });
 });
 
-//check login credentials
+//send reset password email
 auth.post('/reminder', jsonParser, ( req, res ) => {
-  let query=q.get_user();
-  let value = [req.body.username];
+  //clear expired tokens and generate a reset token.
+  const init=[
+                new Promise( (resolve, reject) => clear_expired_tokens( resolve, reject ) ),
+                new Promise( (resolve, reject) => generate_reset_token( resolve, reject ) )
+              ];
 
-  console.log(query, value);
+  Promise.all(init).then(function(values) {
+    let tk=values[1];
+    let query=q.get_user();
+    var pool = new Pool(creds);
+    pool.query(query, [req.body.username], ( err, _res ) => {
+      if ( _res && _res.rows && _res.rows.length !== 0 ){
+        let uid=_res.rows[0].user_id;
+        let date=Moment.utc().add(20,'minutes').format('YYYY-MM-DD hh:mm:ss');
+          query=q.save_reset_token();
+          pool.query(query, [tk,date,uid], ( err, _res ) => {
+            send({
+              to: req.body.username,
+              subject: 'StageRabbit: Reset Password',
+              html: `<p>You have requested to reset your password.
+                        Please go to <a href="https://stagerabbit.com/reset">stagerabbit.com/reset</a> and
+                        enter the following code: ${tk}. Note: This code will expire after 20 minutes.</p>`,
+            }, (error, result, fullResult) => {
+              if (error) res.json({ message: 'User not found.'});
+              var message = `Instructions for resetting your password have been sent to: ${req.body.username}`;
+              res.json({message});
+            });
+          });
 
-  var pool = new Pool(creds);
-  pool.query(query, [req.body.username], ( err, _res ) => {
-    pool.end();
-    if ( _res && _res.rows && _res.rows.length !== 0 ){
-      send({
-        to: req.body.username,
-        subject: 'StageRabbit: Reset Password',
-        text:    'You have requested to reset your password.',
-      }, (error, result, fullResult) => {
-        if (error) console.error(error);
-        var message = `Instructions for resetting your password have been sent to: ${req.body.username}`;
-        console.log(fullResult, message);
-        res.json({message});
-      });
-    } else {
-      console.log('error')
-      res.json({ message: 'User not found.'});
-    }
-  });
+      } else {
+        pool.end();
+        res.json({ message: 'User not found.'});
+      }
+    });
+  })
 });
+
+// reset password
+auth.post('/reset', jsonParser, ( req, res ) => {
+  //clear expired token
+  const clear=new Promise( (resolve, reject) => clear_expired_tokens( resolve, reject ) );
+  //check if token is valid
+  clear.then( val => {
+    const valid=new Promise( (resolve, reject) => check_token( req.body.code, resolve, reject ) );
+    //if valid token, reset password
+    valid.then( user_id => {
+      var pw = req.body.pass1;
+      if(user_id){
+        bcrypt.genSalt(saltRounds, function(err, salt) {
+          bcrypt.hash( pw, salt, function(err, hash) {
+            let params=[hash,user_id];
+            let query=q.update_password();
+            var pool = new Pool(creds);
+            pool.query(query, params, ( err, _res ) => {
+              pool.end();
+              res.json({message:'OK'});
+            });
+          })
+         })
+      } else {
+        res.json({message:'Invalid or Expired Code'})
+      }
+    })
+  }).catch( err => res.json({message:'Error in Clear'}));
+})
 
 auth.get('/logout', jsonParser, (req, res) => {
   req.logout()
@@ -176,18 +217,81 @@ auth.get('/logout', jsonParser, (req, res) => {
   res.send( { message: 'Successfully logged out' } );
 });
 
-// var values =[
-//     'owner@stagerabbit.com',
-//     'Die4u678!',
-//     '',
-//     3,
-//     'John',
-//     'Atkins',
-//     'CEO',
-//     '9176975626'
-//   ];
+function check_token(token,resolve,reject){
+  let query='SELECT * FROM logins WHERE reset_token=$1;'
+  var pool = new Pool(creds);
+  pool.query(query, [token], ( err, _res ) => {
+    pool.end();
+    if ( _res && _res.rows && _res.rows.length > 0 && !has_expired(_res.rows[0].expiry_date) ) resolve(_res.rows[0].user_id);
+    resolve(false);
+  });
+}
 
-//   const pr = new Promise( (resolve, reject ) => make_user( values, '', resolve, reject ) );
-//   pr.then(data => console.log(data));
+function generate_reset_token(resolve, reject){
+  let str='123456789';
+  let radix=str.length;
+  let token='';
+  for (var i = 6; i >= 1; i--) {
+    let x=rand(1,radix);
+    token+=str.substring(x,x+1);
+  }
+  const prom = new Promise( (resolve, reject ) => get_user_by_token( token, resolve, reject ) );
+  prom.then(data => {
+    if (data.exists) {
+      generate_reset_token();
+    } else {
+      resolve(token);
+    }
+  });
+}
+
+function rand(min, max) {
+  return Math.ceil(Math.random() * (max - min) + min);
+}
+
+function get_user_by_token( token, resolve, reject ){
+  var query = `SELECT * FROM logins WHERE token=$1;`;
+  var val=[token];
+  var pool = new Pool(creds);
+  pool.query(query, val, (err, _res) => {
+    pool.end();
+    if ( _res && _res.rowCount > 0 ){
+      resolve( { exists: true, values: _res.rows } );
+    } else {
+      resolve( { exists: false } );
+    }
+  });
+}
+
+function clear_expired_tokens(resolve,reject){
+  let my_promises=[];
+  var query = `SELECT user_id,reset_token,expiry_date FROM logins WHERE reset_token>0;`;
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    if ( _res && _res.rowCount > 0 ){
+      _res.rows.forEach( item => {
+        if(has_expired(item.expiry_date)){
+          my_promises.push(new Promise( (resolve, reject ) => delete_token( [item.user_id], resolve, reject ) ) );
+        }
+      });
+      Promise.all( my_promises ).then( values => {
+        resolve('cleared all')
+      })
+      .catch( err => rej(err));
+    } else { resolve(false) }
+  });
+}
+
+function has_expired(d){
+  var a = Moment.utc();
+  var b = Moment.utc(d);
+  return (a.diff(b) < 0) ?  false :  true;
+}
+
+function delete_token(param,resolve,reject){
+  var query = `UPDATE logins SET reset_token=null, expiry_date=null WHERE user_id=$1 RETURNING *;`;
+  var pool = new Pool(creds);
+  pool.query(query, param, (err, _res) => resolve(true) );
+}
 
 module.exports = auth;

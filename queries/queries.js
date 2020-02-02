@@ -42,6 +42,25 @@ module.exports = {
             WHERE username=$1;`
   },
 
+  save_reset_token: function(){
+    return `UPDATE logins
+            SET reset_token=$1,
+                expiry_date=$2
+            WHERE user_id=$3
+            returning *;`
+  },
+
+  update_password: function(){
+    return `UPDATE logins
+            SET
+                password=$1,
+                reset_token=null,
+                expiry_date=null
+            WHERE user_id=$2
+            returning *;`
+  },
+
+
   create_user: function(){
     return `INSERT INTO logins (username,password,token,level,fname,lname,role,phone,optin)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
