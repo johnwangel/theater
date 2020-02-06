@@ -47,7 +47,9 @@ venues.post('/updateVenue', jsonParser, (req,res) => {
 
       case 2:  //update
         var prom = new Promise( (resolve, reject) => update_venue(venue,resolve,reject) );
-        prom.then( result => get_theaters(venue.tid,res) )
+        prom.then( result => {
+          get_theaters(venue.tid,res)
+        })
         break;
 
       case 3:   //new
@@ -95,6 +97,7 @@ function update_venue(venue, resolve, reject ){
   var pool = new Pool(creds);
   pool.query(vsq, values, (err, _res) => {
     pool.end();
+    console.log(_res);
     (err) ? reject(err) : resolve(_res.rows[0]);
   });
 }

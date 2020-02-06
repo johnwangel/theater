@@ -363,6 +363,7 @@ module.exports = {
               c.name as venue_city,
               s.abbr as venue_state,
               s.id as venue_state_id,
+              s.name as venue_state_name,
               v.zip as venue_zip,
               v.phone as venue_phone,
               v.directions as venue_dir
