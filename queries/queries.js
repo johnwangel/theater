@@ -343,6 +343,10 @@ module.exports = {
             WHERE id=$8 returning *;`;
   },
 
+  venue_remove : function(){
+    return `DELETE from theater_venue WHERE theater_id=$1 AND venue_id=$2;`
+  },
+
   venue_delete : function(){
     return `DELETE from venues WHERE id=$1;`
   },

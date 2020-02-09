@@ -64,7 +64,7 @@ venues.post('/updateVenue', jsonParser, (req,res) => {
 
       case 4: //delete
         venue.vid=body.vid;
-        var prom = new Promise( (resolve, reject) => delete_venue(venue,resolve,reject) );
+        var prom = new Promise( (resolve, reject) => remove_venue(venue,resolve,reject) );
         prom.then( result => get_theaters(venue.tid,res) )
         break;
     }
@@ -100,6 +100,16 @@ function update_venue(venue, resolve, reject ){
     console.log(_res);
     (err) ? reject(err) : resolve(_res.rows[0]);
   });
+}
+
+function remove_venue(venue, resolve, reject){
+  var vsq=q.venue_remove();
+  var val=[venue.tid,venue.vid]
+  var pool = new Pool(creds);
+  pool.query(vsq, val, (err, _res) => {
+    pool.end();
+    (err) ? reject(err) : resolve(_res.rows[0]);
+  })
 }
 
 function delete_venue(venue, resolve, reject){

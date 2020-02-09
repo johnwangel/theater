@@ -186,7 +186,7 @@ const get_theaters = ( tid, res ) => {
 };
 
 theaters.post('/delete_theater', jsonParser, (req,res) => {
-  const id=req.body.theater_id;
+  const id=req.body.delete_id;
     var query = q.delete_theater();
     var values = [ id ];
     var pool = new Pool(creds);
