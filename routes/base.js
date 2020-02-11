@@ -1,6 +1,8 @@
 var express = require('express');
 var base = express.Router();
 
+const Moment = require('moment');
+
 const fetch=require('node-fetch');
 
 const bodyParser = require('body-parser');
@@ -8,20 +10,6 @@ const q = require('../queries/queries.js');
 const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
-
-// console.log('creds',creds);
-
-// var pool = new Pool(creds);
-// var query = q.theaters_all('100');
-// pool.query(query, (err, _res) => {
-//   if ( _res && _res.rows ){
-//     var data=_res.rows;
-//   } else {
-//     data: { error: 'no rows returned' }
-//   }
-//   pool.end();
-//   console.log(data);
-// });
 
 base.get('/', (req,res) => {
   if (!req.query.type) res.json({status: 'ok'});
@@ -33,7 +21,7 @@ base.get('/', (req,res) => {
 
 const get_data = ( type, id, resolve, reject ) => {
   var query,val;
-
+  let date=Moment.utc().format('YYYY-MM-DD');
   //console.log(type,id);
   switch (type){
     case 'alltheaters':
