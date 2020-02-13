@@ -267,6 +267,9 @@ module.exports = {
     return `SELECT * FROM theaters WHERE id=$1;`;
   },
 
+  get_theater_by_token: function(){
+    return `SELECT * FROM theaters WHERE id=$1;`;
+  },
 
   production_save: function(p){
     return `INSERT INTO productions

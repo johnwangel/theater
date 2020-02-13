@@ -81,7 +81,7 @@ auth.post('/register', jsonParser, (req, res) => {
   ];
 
   if (b.token) {
-    const prom = new Promise( (resolve, reject ) => get_theater_by_token( token, resolve, reject ) );
+    const prom = new Promise( (resolve, reject ) => get_theater_by_token( b.token, resolve, reject ) );
     prom.then(data => {
       if (data.exists) {
         tid=data.values.id;
@@ -256,6 +256,21 @@ function get_user_by_token( token, resolve, reject ){
   pool.query(query, val, (err, _res) => {
     pool.end();
     if ( _res && _res.rowCount > 0 ){
+      resolve( { exists: true, values: _res.rows } );
+    } else {
+      resolve( { exists: false } );
+    }
+  });
+}
+
+function get_theater_by_token( token, resolve, reject ){
+  var query = `SELECT * FROM theaters WHERE token=$1;`;
+  var val=[token];
+  var pool = new Pool(creds);
+  pool.query(query, val, (err, _res) => {
+    pool.end();
+    if ( _res && _res.rowCount > 0 ){
+      console.log(_res.rows);
       resolve( { exists: true, values: _res.rows } );
     } else {
       resolve( { exists: false } );
