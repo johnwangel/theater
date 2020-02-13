@@ -33,7 +33,6 @@ prods.get('/byShow',function(req,res){
   var pool = new Pool(creds);
   pool.query(query, show_id, (err, _res) => {
     var data=_res.rows;
-    console.log(data)
     pool.end();
     res.json({ data });
     return;
