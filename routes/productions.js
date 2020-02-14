@@ -48,8 +48,8 @@ prods.post('/addprod', jsonParser, (req,res) => {
   prod.theater_id=theater_id;
   prod.start_date=body.start_date_1;
   prod.end_date=body.end_date_1;
-  (body.cast_1) ? prod.cast_list=body.cast_1 : prod.cast_list='';
-  (body.description_1) ? prod.description=body.description_1.replace(/'/g, "&rsquo;") : prod.description='';
+  (body.cast_1) ? prod.cast_list=processBlockText(body.cast_1) : prod.cast_list='';
+  (body.description_1) ? prod.description=processBlockText(body.description_1) : prod.description='';
   (body.show_select) ? prod.show_id=body.show_select : prod.show_id=null;
   (body.venue_by_theater) ? prod.venue_id=body.venue_by_theater : prod.venue_id=null;
 
@@ -72,7 +72,6 @@ prods.post('/addprod', jsonParser, (req,res) => {
   });
 });
 
-
 prods.post('/editprod', jsonParser, (req,res) => {
   const body=req.body;
   const pid=parseInt(body.prod_id);
@@ -82,8 +81,8 @@ prods.post('/editprod', jsonParser, (req,res) => {
                 venue_id: (body.venue_by_theater) ? parseInt(body.venue_by_theater) : null,
                 start_date: (body.start_date_1) ? body.start_date_1 : null,
                 end_date: (body.end_date_1) ? body.end_date_1 : null,
-                cast_list: (body.cast_1) ? body.cast_1.replace(/'/g, "&rsquo;") : '',
-                description: (body.description_1) ? body.description_1.replace(/'/g, "&rsquo;") : '',
+                cast_list: (body.cast_1) ? processBlockText(body.cast_1) : '',
+                description: (body.description_1) ? processBlockText(body.description_1) : '',
               };
 
   const values = [ prod.show_id, prod.venue_id, prod.start_date, prod.end_date, prod.cast_list, prod.description, prod.prod_id  ]
@@ -102,5 +101,14 @@ prods.post('/editprod', jsonParser, (req,res) => {
     })
   })
 });
+
+function processBlockText(txt){
+  txt.replace(/'/g, '&rsquo;')
+  txt=`<p>${txt}</p>`;
+  var lf = String.fromCharCode(10);
+  var res = txt.split(lf);
+  var newtxt = res.join('</p><p>');
+  return newtxt;
+}
 
 module.exports = prods;
