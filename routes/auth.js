@@ -116,7 +116,7 @@ function make_user( values, resolve, reject ) {
               resolve(err);
             } else if (_res && _res.rows) {
               let user=_res.rows[0];
-              let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname };
+              let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, token: user.token };
               user.jwt=jsonwebtoken.sign( token_info, 'RESTFULAPIs' );
               resolve(user);
             } else {
@@ -136,8 +136,9 @@ auth.post('/login', jsonParser, ( req, res ) => {
     pool.end();
     if ( _res && _res.rows && _res.rows.length !== 0 ){
       const user=_res.rows[0];
+      console.log(user)
       if(bcrypt.compareSync( req.body.password, user.password )){
-        user.jwt=jsonwebtoken.sign( { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid }, 'RESTFULAPIs' );
+        user.jwt=jsonwebtoken.sign( { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid, token: user.token }, 'RESTFULAPIs' );
         return res.json(user);
       } else {
         res.json({ message: 'Authentication failed. Wrong password.'});
