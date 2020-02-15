@@ -85,7 +85,7 @@ auth.post('/register', jsonParser, (req, res) => {
     prom.then(data => {
       if (data.exists) {
         tid=data.values.id;
-        values.level=2;
+        values[3]=2;
         cont();
       } else {
         res.json({ message: 'Authentication failed. Wrong password.'});
