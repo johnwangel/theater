@@ -85,9 +85,10 @@ auth.post('/register', jsonParser, (req, res) => {
     prom.then(data => {
       if (data.exists) {
         tid=data.values.id;
+        values.level=2;
         cont();
       } else {
-        cont();
+        res.json({ message: 'Authentication failed. Wrong password.'});
       }
     });
   } else {
@@ -95,13 +96,16 @@ auth.post('/register', jsonParser, (req, res) => {
   }
 
   function cont() {
-    const prom2 = new Promise( (resolve, reject ) => make_user( values, tid, resolve, reject ) );
-    prom2.then(data => res.json(data));
+    const prom2 = new Promise( (resolve, reject ) => make_user( values, resolve, reject ) );
+    prom2.then(data => {
+      data.tid=tid;
+      res.json(data);
+    });
   }
 
 });
 
-function make_user( values, tid, resolve, reject ) {
+function make_user( values, resolve, reject ) {
   var query=q.create_user();
     bcrypt.genSalt(saltRounds, function(err, salt) {
       bcrypt.hash( values[1], salt, function(err, hash) {
@@ -112,7 +116,8 @@ function make_user( values, tid, resolve, reject ) {
               resolve(err);
             } else if (_res && _res.rows) {
               let user=_res.rows[0];
-              user.jwt=jsonwebtoken.sign( { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: tid }, 'RESTFULAPIs' );
+              let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname };
+              user.jwt=jsonwebtoken.sign( token_info, 'RESTFULAPIs' );
               resolve(user);
             } else {
               resolve('ERROR');
@@ -270,8 +275,7 @@ function get_theater_by_token( token, resolve, reject ){
   pool.query(query, val, (err, _res) => {
     pool.end();
     if ( _res && _res.rowCount > 0 ){
-      console.log(_res.rows);
-      resolve( { exists: true, values: _res.rows } );
+      resolve( { exists: true, values: _res.rows[0] } );
     } else {
       resolve( { exists: false } );
     }
