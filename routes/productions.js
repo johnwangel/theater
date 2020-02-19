@@ -35,7 +35,7 @@ prods.get('/byCompany',function(req,res){
   var pool = new Pool(creds);
   pool.query(query, val, (err, _res) => {
     pool.end();
-    if (err) res.json({ error : "There was an error." });
+    if (err || !_res) res.json({ error : "There was an error." });
     var data=_res.rows;
     data.forEach( (item, index) => {
       let production_promise=new Promise( (resolve, reject ) => {
