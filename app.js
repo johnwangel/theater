@@ -14,11 +14,16 @@ app.use(function(req, res, next) {
   next();
 });
 
+const functions = require('./routes/all_functions');
+
 const base = require('./routes/base');
 app.use('/', base);
 
 const artists = require('./routes/artists');
 app.use('/artists', artists);
+
+const prods = require('./routes/productions');
+app.use('/productions', prods);
 
 const auth = require('./routes/auth');
 app.use('/auth', auth);
@@ -28,9 +33,6 @@ app.use('/contact', contact);
 
 const locations = require('./routes/locations');
 app.use('/locations', locations);
-
-const prods = require('./routes/productions');
-app.use('/productions', prods);
 
 const search = require('./routes/search');
 app.use('/search', search);

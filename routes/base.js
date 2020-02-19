@@ -31,10 +31,6 @@ const get_data = ( type, id, resolve, reject ) => {
       query=q.theater(id);
       val=[id];
       break;
-    case 'productions':
-      query=q.productions(id);
-      val=[id];
-      break;
     case 'all_shows':
       query=q.shows();
       break;

@@ -1,0 +1,40 @@
+var express = require('express');
+var functions = express.Router();
+
+const { get_data } = require('./base');
+const { artists_by_type } = require('./artists');
+
+const q = require('../queries/queries.js');
+const tokens = require('../constants/tokens.js');
+const { Pool, Client } = require('pg');
+const creds = tokens.db_creds;
+
+functions.getOneProduction = ( pid, resolve, reject) => {
+  let query=q.production(), val=[pid];
+  var pool = new Pool(creds);
+  pool.query(query, val, (err, _res) => {
+    pool.end();
+    if (err || !_res || !_res.rows) resolve({error: 'An error occurred.'})
+    var data=_res.rows[0]
+    let data_promise=new Promise( (resolve, reject ) => getArtistsForOneProduction(item.show_id,item.production_id,resolve,reject) );
+    data_promise.then( d => {
+      data.artists=d.artists;
+      data.venue=d.venue;
+      res.json(data);
+    });
+  });
+}
+
+functions.getArtistsForOneProduction = ( sid, pid, resolve, reject ) => {
+  const show_artists=new Promise( (res1, rej1 ) => artists_by_type( sid, 1, res1, rej1 ) );
+  const prod_artists=new Promise( (res2, rej2 ) => artists_by_type( pid, 2, res2, rej2 ) );
+  const venue=new Promise( (res3, rej3 ) => get_data( 'venue_by_production', pid, res3, rej3 ) );
+  Promise.all([show_artists,prod_artists,venue])
+  .then( d => {
+    let artists={ ...d[0], ...d[1] };
+    let venue=d[2];
+    resolve( {  artists, venue })
+  });
+}
+
+module.exports = functions;

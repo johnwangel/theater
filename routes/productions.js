@@ -1,7 +1,10 @@
 var express = require('express');
 var prods = express.Router();
 
-const { save_artists, process_artists } = require('./artists');
+const { get_data } = require('./base');
+const { save_artists, get_artists, process_artists, artists_by_type} = require('./artists');
+
+const { getArtistsForOneProduction }= require('./all_functions');
 
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
@@ -22,6 +25,30 @@ prods.get('/',function(req,res){
     pool.end();
     res.json({ data });
     return;
+  });
+});
+
+prods.get('/byCompany',function(req,res){
+  let thtr_id = (req.query.id) ? req.query.id : 1;
+  let query=q.productions(), val=[thtr_id], all_promises = [];
+
+  var pool = new Pool(creds);
+  pool.query(query, val, (err, _res) => {
+    pool.end();
+    if (err) res.json({ error : "There was an error." });
+    var data=_res.rows;
+    data.forEach( (item, index) => {
+      let production_promise=new Promise( (resolve, reject ) => {
+          let data_promise=new Promise( (resolve, reject ) => getArtistsForOneProduction(item.show_id,item.production_id,resolve,reject) );
+          data_promise.then( d => {
+            data[index].artists=d.artists;
+            data[index].venue=d.venue;
+            resolve('ok');
+          });
+        });
+      all_promises.push(production_promise);
+    });
+    Promise.all(all_promises).then( q => res.json({ data }) );
   });
 });
 
@@ -84,7 +111,6 @@ prods.post('/editprod', jsonParser, (req,res) => {
                 cast_list: (body.cast_1) ? processBlockText(body.cast_1) : '',
                 description: (body.description_1) ? processBlockText(body.description_1) : '',
               };
-
   const values = [ prod.show_id, prod.venue_id, prod.start_date, prod.end_date, prod.cast_list, prod.description, prod.prod_id  ]
   const query = q.production_update( prod );
   const artists = process_artists( body )
@@ -96,7 +122,14 @@ prods.post('/editprod', jsonParser, (req,res) => {
       let val=[pid];
       pool.query(query, val, (err, _res) => {
         pool.end();
-        res.json(_res.rows[0]);
+        if (err) res.json({error: 'An error occurred.'})
+        var data=_res.rows[0]
+        let data_promise=new Promise( (resolve, reject ) => getArtistsForOneProduction(prod.show_id,prod.prod_id,resolve,reject) );
+        data_promise.then( d => {
+          data.artists=d.artists;
+          data.venue=d.venue;
+          res.json(data);
+        });
       })
     })
   })
@@ -104,10 +137,11 @@ prods.post('/editprod', jsonParser, (req,res) => {
 
 function processBlockText(txt){
   txt.replace(/'/g, '&rsquo;')
-  txt=`<p>${txt}</p>`;
   var lf = String.fromCharCode(10);
   var res = txt.split(lf);
   var newtxt = res.join('</p><p>');
+  const regex = RegExp('<p>.*?<\/p>$');
+  if(!regex.test(txt)) txt=`<p>${txt}</p>`;
   return newtxt;
 }
 

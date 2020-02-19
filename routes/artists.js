@@ -15,34 +15,13 @@ const creds = tokens.db_creds;
 artists.get('/',function(req,res){
   const id=req.query.id;
   const type=parseInt(req.query.type);
-
-  if (type===1){
-    let table='show';
-    let field='id';
-    const book = new Promise( (resolve, reject ) => get_artists( id, 'book', table, field, resolve, reject ) );
-    const lyrics = new Promise( (resolve, reject ) => get_artists( id, 'lyrics', table, field,  resolve, reject ) );
-    const music = new Promise( (resolve, reject ) => get_artists( id, 'music', table, field, resolve, reject ) );
-    const playwright = new Promise( (resolve, reject ) => get_artists( id, 'playwright', table, field, resolve, reject ) );
-    Promise.all([book,lyrics,music,playwright])
-    .then(data => {
-      res.json({ book: data[0], lyrics: data[1], music: data[2], pw: data[3] });
-    });
-  } else if (type===2) {
-    let table='production';
-    let field='production_id';
-    const dir = new Promise( (resolve, reject ) => get_artists( id, 'directors', table, field, resolve, reject ) );
-    const chor = new Promise( (resolve, reject ) => get_artists( id, 'choreographers', table, field,  resolve, reject ) );
-    const md = new Promise( (resolve, reject ) => get_artists( id, 'music_directors', table, field, resolve, reject ) );
-    Promise.all([dir,chor,md])
-    .then(data => {
-      res.json({ dir: data[0], chor: data[1], md: data[2] });
-    })
-  }
+  const artists=new Promise( (resolve, reject ) => artists_by_type(id, type, resolve, reject ) );
+  artists.then( data => res.json(data));
 });
 
 artists.post('/addartist', jsonParser, (req,res) => {
   const body=req.body;
-  const values=[ body.fname.replace(/'/g, "''"), body.lname.replace(/'/g, "''")]
+  const values=[ body.fname.replace(/'/g, "&rsquo;"), body.lname.replace(/'/g, "&rsquo;")]
   var query=q.artist_save();
   if (body.editmode && body.artist_id !=='0'){
     values.push(body.artist_id);
@@ -60,10 +39,11 @@ artists.post('/addartist', jsonParser, (req,res) => {
 
 artists.post('/remove_artist', jsonParser, (req,res) => {
   const body=req.body;
+  const fromWhere=body.fromWhere;
   var tb;
   switch (body.type){
     case 'book':
-      tb='book'
+      tb='book';
       break;
     case 'music':
       tb='music';
@@ -89,25 +69,64 @@ artists.post('/remove_artist', jsonParser, (req,res) => {
                 field_name: body.assoc,
                 assoc_id: body.assoc_id
               };
-
-  let values = [data.artist_id, data.assoc_id ];
+  let values = [ data.artist_id, data.assoc_id ];
   let query=q.unassociate_artist(data);
+
   var pool = new Pool(creds);
     pool.query(query, values, (err, _res) => {
       pool.end();
-      res.json('ok');
+      if (err) res.json({ message : 'Sorry there was an error.'});
+      let prom;
+      switch( data.field_name ){
+        case 'production':
+          prom = new Promise( ( resolve, reject ) => getProduction(data.assoc_id,resolve,reject) );
+          break;
+        case 'show':
+          prom = new Promise( ( resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
+          break;
+      }
+      prom.then( new_data => res.json({ data: new_data }) )
     });
 });
+
+
+const artists_by_type = (id, type, resolve, reject) => {
+  let all_promises=[];
+  let params;
+  switch(type){
+    case 1:
+      params={ table: 'show', field: 'id', artists : ['book','lyrics','music','playwright'] };
+      break;
+    case 2:
+      params={ table: 'production', field: 'production_id', artists : ['directors','choreographers','music_directors' ] };
+      break;
+  }
+  params.artists.forEach( item => {
+    const prom = new Promise( (resolve, reject ) => get_artists( id, item, params.table, params.field, resolve, reject ) );
+    all_promises.push(prom);
+  })
+  Promise.all(all_promises)
+  .then( data => {
+    switch(type){
+      case 1:
+        resolve({ book: data[0], lyrics: data[1], music: data[2], pw: data[3] });
+        break;
+      case 2:
+        resolve({ dir: data[0], chor: data[1], md: data[2] });
+        break;
+    }
+  });
+}
 
 const get_artists = (id, type, table, field, resolve, reject ) => {
   query=q.artist(id,type,table,field);
   var pool = new Pool(creds);
   pool.query(query, [id], (err, _res) => {
     pool.end();
-    if ( _res && _res.rows ){
-      resolve(_res.rows)
+    if ( _res && _res.rows && _res.rows.length ){
+      resolve(_res.rows);
     } else {
-      reject({ error: 'no rows returned' })
+      resolve(null);
     }
   });
 }
@@ -252,7 +271,37 @@ const process_artists = (body) => {
   })
   return { book, lyrics, music, playwright, directors, choreographers, music_directors  }
 }
+
+getProduction = ( pid, resolve, reject) => {
+  let query=q.production(), val=[pid];
+  var pool = new Pool(creds);
+  pool.query(query, val, (err, _res) => {
+    pool.end();
+    if (err || !_res || !_res.rows) resolve({error: 'An error occurred.'})
+    var data=_res.rows[0]
+    let data_promise=new Promise( (resolve, reject ) => getArtistsForProduction(data.show_id,data.production_id,resolve,reject) );
+    data_promise.then( d => {
+      data.artists=d.artists;
+      data.venue=d.venue;
+      resolve(data);
+    });
+  });
+}
+
+getArtistsForProduction = ( sid, pid, resolve, reject ) => {
+  const show_artists=new Promise( (res1, rej1 ) => artists_by_type( sid, 1, res1, rej1 ) );
+  const prod_artists=new Promise( (res2, rej2 ) => artists_by_type( pid, 2, res2, rej2 ) );
+  const venue=new Promise( (res3, rej3 ) => get_data( 'venue_by_production', pid, res3, rej3 ) );
+  Promise.all([show_artists,prod_artists,venue])
+  .then( d => {
+    let artists={ ...d[0], ...d[1] };
+    let venue=d[2];
+    resolve( {  artists, venue })
+  });
+}
+
 artists.save_artists=save_artists;
 artists.get_artists=get_artists;
 artists.process_artists=process_artists;
+artists.artists_by_type=artists_by_type;
 module.exports = artists;

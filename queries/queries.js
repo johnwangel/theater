@@ -5,6 +5,7 @@ module.exports = {
                 s.title,
                 t.name as theater_name,
                 v.name as venue_name,
+                v.id as venue_id,
                 v.*,
                 c.name as city_name,
                 st.name as state_name,
@@ -292,14 +293,16 @@ module.exports = {
   },
 
   production: function(){
-    return `SELECT p.production_id,
+    return `SELECT
+                p.production_id,
                 p.start_date,
                 p.end_date,
                 p.cast_list,
                 p.description,
                 p.show_id,
                 s.title,
-                g.name as genre
+                g.name as genre,
+                g.id as genre_id
           from productions p
           join shows s on p.show_id=s.id
           join genres g on s.genre=g.id

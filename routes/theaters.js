@@ -35,7 +35,6 @@ theaters.post('/add_theater', jsonParser, (req,res) => {
   const place = new Promise( (resolve, reject) => getPlace(t, resolve, reject));
   Promise.all([new_theater,token,place])
   .then( values => {
-    console.log('PLACE',values)
     let theater=values[0];
     let place=values[2];
     data.token=values[1];
