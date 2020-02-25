@@ -22,6 +22,7 @@ shows.post('/addshow', jsonParser, (req,res) => {
   var query=q.show_save(show);
   const values = [ show.title, show.genre, show.description ];
   pool.query(query, values, (err, _res) => {
+    let new_show = _res.rows[0];
     pool.end();
     const artists = process_artists( body )
     const show_promise = new Promise( (resolve, reject) => save_artists( artists, _res.rows[0].id, null, resolve, reject ) );
@@ -31,7 +32,7 @@ shows.post('/addshow', jsonParser, (req,res) => {
       const prom2 = new Promise( (resolve, reject ) => get_data( 'all_artists', null, resolve, reject ) );
       Promise.all([prom1,prom2])
       .then( data => {
-        res.json({ shows: data[0], artists: data[1] })
+        res.json({ shows: data[0], artists: data[1], new_show });
       })
     })
   });

@@ -32,6 +32,9 @@ prods.get('/byCompany',function(req,res){
   let thtr_id = (req.query.id) ? req.query.id : 1;
   let query=q.productions(), val=[thtr_id], all_promises = [];
 
+  console.log(thtr_id, query)
+
+
   var pool = new Pool(creds);
   pool.query(query, val, (err, _res) => {
     pool.end();
