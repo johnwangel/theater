@@ -427,6 +427,10 @@ module.exports = {
 
   email_get: function(){
     return `SELECT * from email WHERE handled = false ORDER BY created_at DESC;`;
+  },
+
+  email_theater_info: function(){
+    return `SELECT * FROM theaters WHERE id=$1;`;
   }
 
 }

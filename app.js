@@ -22,6 +22,9 @@ app.use('/', base);
 const artists = require('./routes/artists');
 app.use('/artists', artists);
 
+const emails = require('./routes/emails');
+app.use('/', emails);
+
 const prods = require('./routes/productions');
 app.use('/productions', prods);
 
