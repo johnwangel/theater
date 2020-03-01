@@ -86,7 +86,7 @@ auth.post('/register', jsonParser, (req, res) => {
       if (data.exists) {
         tid=data.values.id;
         values[3]=2;
-        cont();
+        cont(tid);
       } else {
         res.json({ message: 'Authentication failed. Wrong password.'});
       }
@@ -95,8 +95,8 @@ auth.post('/register', jsonParser, (req, res) => {
     cont();
   }
 
-  function cont() {
-    const prom2 = new Promise( (resolve, reject ) => make_user( values, resolve, reject ) );
+  function cont(tid) {
+    const prom2 = new Promise( (resolve, reject ) => make_user( values, tid, resolve, reject ) );
     prom2.then(data => {
       data.tid=tid;
       res.json(data);
@@ -105,7 +105,7 @@ auth.post('/register', jsonParser, (req, res) => {
 
 });
 
-function make_user( values, resolve, reject ) {
+function make_user( values, tid, resolve, reject ) {
   var query=q.create_user();
     bcrypt.genSalt(saltRounds, function(err, salt) {
       bcrypt.hash( values[1], salt, function(err, hash) {
@@ -116,7 +116,8 @@ function make_user( values, resolve, reject ) {
               resolve(err);
             } else if (_res && _res.rows) {
               let user=_res.rows[0];
-              let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, token: user.token };
+              let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, token: user.token, tid: tid };
+              //console.log('token in make_user',token_info);
               user.jwt=jsonwebtoken.sign( token_info, 'RESTFULAPIs' );
               resolve(user);
             } else {
@@ -136,9 +137,10 @@ auth.post('/login', jsonParser, ( req, res ) => {
     pool.end();
     if ( _res && _res.rows && _res.rows.length !== 0 ){
       const user=_res.rows[0];
-      console.log(user)
       if(bcrypt.compareSync( req.body.password, user.password )){
-        user.jwt=jsonwebtoken.sign( { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid, token: user.token }, 'RESTFULAPIs' );
+        let item={ id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid, token: user.token };
+        //console.log('token in login', item);
+        user.jwt=jsonwebtoken.sign( item, 'RESTFULAPIs' );
         return res.json(user);
       } else {
         res.json({ message: 'Authentication failed. Wrong password.'});

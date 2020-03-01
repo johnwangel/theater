@@ -23,27 +23,27 @@ const template = require('../emails/templates');
 var query=q.email_theater_info();
 var vals = [1];
 var pool = new Pool(creds);
-pool.query(query, vals, (err, _res) => {
-  var data=_res.rows[0];
-  pool.end();
+// pool.query(query, vals, (err, _res) => {
+//   var data=_res.rows[0];
+//   pool.end();
 
-  send({
-        to: 'johnatkins1999@yahoo.com',
-        subject: 'Introducting StageRabbit',
-        html: intro_email(data),
-      }, (error, result, fullResult) => {
-        console.log(error,result,fullResult)
-        // if (error) res.json({ message: 'Error.'});
-        // var message = `ok`;
-        // res.json({message});
-      });
+//   send({
+//         to: 'johnatkins1999@yahoo.com',
+//         subject: 'Introducting StageRabbit',
+//         html: intro_email(data),
+//       }, (error, result, fullResult) => {
+//         console.log(error,result,fullResult)
+//         // if (error) res.json({ message: 'Error.'});
+//         // var message = `ok`;
+//         // res.json({message});
+//       });
 
 
 
-  // if (err){ res.json({  status: 'fail' } ); }
-  // res.json({ status: 'success', data });
-  return;
-});
+//   // if (err){ res.json({  status: 'fail' } ); }
+//   // res.json({ status: 'success', data });
+//   return;
+// });
 
 
 
