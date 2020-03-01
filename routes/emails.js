@@ -85,7 +85,7 @@ function intro_email(d){
           <p>This token will provide you with exclusive access to edit and revise all information regarding your Theater Company.</p>
 
           <div class='button-container'>
-            <a class='mybutton' href='https://stagerabbit.com/register/?tk=${d.token}'>Register Now</a>
+            <a class='mybutton' href='https://stagerabbit.com/register/${d.token}'>Register Now</a>
           </div>
 
           <p>Follow the instructions here (<a href="https://stagerabbit.com/instructions">stagerabbit.com/instructions</a>) for correcting or adding information to our site.</p>
