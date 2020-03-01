@@ -21,7 +21,7 @@ const send = require('gmail-send')({
 const template = require('../emails/templates');
 
 var query=q.email_theater_info();
-var vals = [2002];
+var vals = [1];
 var pool = new Pool(creds);
 pool.query(query, vals, (err, _res) => {
   var data=_res.rows[0];
