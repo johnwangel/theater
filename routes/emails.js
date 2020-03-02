@@ -50,22 +50,24 @@ function getit(item,resolve,reject){
   });
 }
 
-            //to: `${th.email}`,
-
 function send_emails(t){
-  // t.forEach( th => {
-  //   //log_email(1,th.id);
-  //   send({
-  //           to: `${th.email}`,
-  //           //to: 'johnatkins1999@yahoo.com',
-  //           bcc: 'info@stagerabbit.com',
-  //           subject: 'Get your theater company noticed at StageRabbit.com',
-  //           html: intro_email(th),
-  //         }, (error, result, fullResult) => {
-  //           console.log(error,result,fullResult);
-  //           if (!error) log_email(1,th.id);
-  //         });
-  // });
+  t.forEach( (th,i) => {
+    let theater=th;
+    setTimeout(function(){send_email(theater)}, 1000*i);
+  });
+}
+
+function send_email(th){
+    send({
+            to: `${th.email}`,
+            //to: 'info@stagerabbit.com',
+            bcc: 'info@stagerabbit.com',
+            subject: 'Get your theater company noticed at StageRabbit.com',
+            html: intro_email(th),
+          }, (error, result, fullResult) => {
+            console.log(th.name,error);
+            if (!error) log_email(1,th.id);
+          });
 }
 
 
@@ -80,15 +82,22 @@ function log_email(number,id){
 module.exports = emails;
 
 function intro_email(d){
+  var button_container=`style='display: flex;flex-direction:row;justify-content: center;align-items: center;width: 100%;border: unset;'`;
+  var button=`style="text-deocoration:none;padding:15px;background-color:indigo;color:white;font-size: 1.5em;font-weight: bold;font-family: 'Raleway';margin: auto;border-radius: 10px;cursor: pointer;box-shadow: -2px 3px 5px grey;"`;
+
+
   let text = `<h2 style="font-weight:bold;padding: 15px 0;color:darkorchid;font-size:1.8em;font-family:'Raleway';border: unset;">Dear friends at ${d.name}:</h2>
-          <p>I&rsquo;m writing to introduce you to an exciting new website,
-          <a href="https://stagerabbit.com">StageRabbit.com</a>,
-          created specifically to connect lovers of <b>LIVE</b> theater with
-          all of the theater options available in their area.</p>
+          <p>I&rsquo;m writing because your Theater Company has been included on StageRabbit.com.
+             You can view the entry here:
+
+          <div ${button_container}>
+            <a ${button} href='https://stagerabbit.com/theater/${d.id}'>View &ldquo;${d.name}&rdquo;</a>
+          </div>
 
           <h2 style="font-weight:bold;padding: 15px 0;color:darkorchid;font-size:1.8em;font-family:'Raleway';border: unset;">What is StageRabbit?</h2>
 
-          <p>We are building the most comprehensive database of live theater options
+          <p><a href="https://stagerabbit.com">StageRabbit.com</a> is a new website created specifically to connect lovers of <b>LIVE</b> theater with
+          all of the theater options available in their area. We are building the most comprehensive database of live theater options
           across the country, including regional, community, university,
           youth and children&rsquo;s, as well as professional and non-professional tours.</p>
 
@@ -105,8 +114,6 @@ function intro_email(d){
           in making our database as complete and accurate as possible.</p>
 
           <h2 style="font-weight:bold;padding: 15px 0;color:darkorchid;font-size:1.8em;font-family:'Raleway';border: unset;">Review Your Troupe Details</h2>
-
-          <p>You can view the current entry for <b>${d.name}</b> at <a href='https://stagerabbit.com/theater/${d.id}'>stagerabbit.com/theater/${d.id}</a></p>
 
           <p>If any information is incorrect, or you would like to add more information (such as Productions), we have created an interface that makes it very simple for you to log in,
           review details about your theater company, and make updates yourself.</p>
