@@ -53,19 +53,19 @@ function getit(item,resolve,reject){
             //to: `${th.email}`,
 
 function send_emails(t){
-  t.forEach( th => {
-    //log_email(1,th.id);
-    send({
-            to: `${th.email}`,
-            //to: 'johnatkins1999@yahoo.com',
-            bcc: 'info@stagerabbit.com',
-            subject: 'Get your theater company noticed at StageRabbit.com',
-            html: intro_email(th),
-          }, (error, result, fullResult) => {
-            console.log(error,result,fullResult);
-            if (!error) log_email(1,th.id);
-          });
-  });
+  // t.forEach( th => {
+  //   //log_email(1,th.id);
+  //   send({
+  //           to: `${th.email}`,
+  //           //to: 'johnatkins1999@yahoo.com',
+  //           bcc: 'info@stagerabbit.com',
+  //           subject: 'Get your theater company noticed at StageRabbit.com',
+  //           html: intro_email(th),
+  //         }, (error, result, fullResult) => {
+  //           console.log(error,result,fullResult);
+  //           if (!error) log_email(1,th.id);
+  //         });
+  // });
 }
 
 
