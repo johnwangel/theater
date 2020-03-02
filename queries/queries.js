@@ -431,6 +431,23 @@ module.exports = {
 
   email_theater_info: function(){
     return `SELECT * FROM theaters WHERE id=$1;`;
-  }
+  },
+
+  log_sent_email: function(){
+    return `insert into notification(notification_list_id,theater_id,sent) VALUES($1,$2,now());`;
+  },
+
+  theater_mail:  function(notif_no){
+    return `SELECT
+      t.*,
+      sp.name as specialty,
+      st1.name as theater_state,
+      n.sent
+      FROM theaters t
+      LEFT OUTER JOIN states st1 on t.state=st1.id
+      LEFT OUTER JOIN specialty sp on t.specialty_id=sp.id
+      LEFT OUTER JOIN notification n on t.id = n.theater_id and n.notification_list_id=${notif_no}
+      WHERE t.id=$1 and n.sent is null;`;
+  },
 
 }

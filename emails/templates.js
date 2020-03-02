@@ -21,27 +21,6 @@ module.exports = {
                       .icon {width:25%;padding-right:5px;}
                       .icon_name {width:75%;padding-left:5px;}
                       .url {word-wrap:break-word;}
-                      .heading { font-weight:bold;padding: 15px; background-color: lightgray;color:darkorchid;font-size:1.8em;font-family:'Raleway';}
-                      .button-container {
-                        display: flex;
-                        flex-direction: row;
-                        justify-content: center;
-                        align-items: center;
-                        width: 100%;
-                        border: unset;
-                      }
-                      .mybutton {
-                        padding: 20px;
-                        background-color: indigo;
-                        color: white;
-                        font-size: 2em;
-                        font-weight: bold;
-                        font-family: 'Raleway';
-                        margin: auto;
-                        border-radius: 10px;
-                        border: 4px solid lightgray;
-                        cursor: pointer;
-                      }
                     </style>
                     <div>
                       <table style="border-spacing:0;border-collapse:collapse;padding:0;width:600px;margin:0 auto;">
