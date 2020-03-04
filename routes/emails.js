@@ -20,27 +20,39 @@ const send = require('gmail-send')({
 
 const template = require('../emails/templates');
 
-let modno=25;
-let list = [];
-for (var i = 4450 - 1; i >= 0; i--) {
-  if (i%modno===0) list.push(i);
+// let modno=25;
+// let list = [];
+// for (var i = 4450 - 1; i >= 0; i--) {
+//   if (i%modno===0) list.push(i);
+// }
+
+
+var query=`select id, name, city, state from theaters where state  in (1,2,3,4,12,19);`;
+var pool = new Pool(creds);
+pool.query(query, (err, _res) => {
+  pool.end();
+  let list=_res.rows;
+  do_theaters(list);
+});
+
+
+function do_theaters(list) {
+  let proms=[];
+  let theaters=[];
+  list.forEach(item=>{
+    let x = new Promise( (resolve, reject ) => getit(item.id,resolve,reject));
+    proms.push(x);
+  });
+
+  Promise.all(proms).then( thtrs => {
+    thtrs.forEach( item => { if(item)theaters.push(item); });
+    console.log(theaters);
+    send_emails(theaters);
+  });
 }
 
-var query=q.theater_mail(1);
-let proms=[];
-let theaters=[];
-list.forEach(item=>{
-  let x = new Promise( (resolve, reject ) => getit(item,resolve,reject));
-  proms.push(x);
-});
-
-Promise.all(proms).then( thtrs => {
-  thtrs.forEach( item => { if(item)theaters.push(item); });
-  console.log(theaters);
-  send_emails(theaters);
-});
-
 function getit(item,resolve,reject){
+  var query=q.theater_mail(1);
   var vals = [item];
   var pool = new Pool(creds);
   pool.query(query, vals, (err, _res) => {

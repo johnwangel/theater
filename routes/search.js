@@ -58,10 +58,7 @@ search.post('/ByCity',jsonParser, (req,res) => {
   let values = [data.city,data.state];
   var pool = new Pool(creds);
   pool.query(cityg, values, (err, _res) => {
-      if (err) {
-        console.log(err);
-        res.json([]);
-      }
+      if (err) res.json([])
       if (_res.rowCount === 0) {
         citys=q.city_save();
         pool.query(citys, values, (err, _res) => {
