@@ -67,6 +67,29 @@ prods.get('/byShow',function(req,res){
   });
 });
 
+prods.get('/byShowGroup',function(req,res){
+  var group_id = parseInt(req.query.id);
+  let group;
+  let error={error: 'Error'};
+  switch (group_id){
+    case 1:
+      group='(22,23,65,66,206,328,942,943,944,945,946,947)';
+      if (!tokens.live) group='(22,23,65,66,206,328,599,600,601,602,603,604)';
+      break;
+    default:
+      console.log('default');
+      res.json(error);
+      return;
+  }
+  let query = q.find_productions_by_show_group(group);
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    if (err) res.json(error);
+    res.json({ data : _res.rows });
+  });
+});
+
 prods.post('/addprod', jsonParser, (req,res) => {
   const body=req.body;
   var theater_id;

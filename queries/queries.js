@@ -20,6 +20,26 @@ module.exports = {
 
   },
 
+  find_productions_by_show_group: function(group){
+    return `SELECT p.*,
+                s.title,
+                t.name as theater_name,
+                v.name as venue_name,
+                v.id as venue_id,
+                v.*,
+                c.name as city_name,
+                st.name as state_name,
+                st.abbr as state_abbr
+            FROM productions p
+            JOIN shows s on p.show_id=s.id
+            JOIN theaters t on p.theater_id=t.id
+            JOIN venues v on p.venue_id=v.id
+            JOIN cities c on v.city=c.city_id
+            JOIN states st on c.state_id = st.id
+            WHERE s.id in ${group};`;
+
+  },
+
   find_shows: function(){
     return `SELECT title, id, SIMILARITY(title,$1) as sml
             FROM shows

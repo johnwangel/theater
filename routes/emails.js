@@ -32,7 +32,7 @@ var pool = new Pool(creds);
 pool.query(query, (err, _res) => {
   pool.end();
   let list=_res.rows;
-  do_theaters(list);
+  //do_theaters(list);
 });
 
 
@@ -46,8 +46,8 @@ function do_theaters(list) {
 
   Promise.all(proms).then( thtrs => {
     thtrs.forEach( item => { if(item)theaters.push(item); });
-    console.log(theaters);
-    send_emails(theaters);
+    //console.log(theaters);
+    //send_emails(theaters);
   });
 }
 
@@ -70,16 +70,16 @@ function send_emails(t){
 }
 
 function send_email(th){
-    send({
-            to: `${th.email}`,
-            //to: 'info@stagerabbit.com',
-            bcc: 'info@stagerabbit.com',
-            subject: 'Get your theater company noticed at StageRabbit.com',
-            html: intro_email(th),
-          }, (error, result, fullResult) => {
-            console.log(th.name,error);
-            if (!error) log_email(1,th.id);
-          });
+    // send({
+    //         to: `${th.email}`,
+    //         //to: 'info@stagerabbit.com',
+    //         bcc: 'info@stagerabbit.com',
+    //         subject: 'Get your theater company noticed at StageRabbit.com',
+    //         html: intro_email(th),
+    //       }, (error, result, fullResult) => {
+    //         console.log(th.name,error);
+    //         if (!error) log_email(1,th.id);
+    //       });
 }
 
 
@@ -152,3 +152,5 @@ function intro_email(d){
           </h2>`;
   return template.basic(text);
 }
+
+
