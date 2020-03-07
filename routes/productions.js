@@ -165,13 +165,20 @@ prods.get('/recentprods', jsonParser, (req,res) => {
   pool.query(query, (err, _res) => {
     let prods=_res.rows;
     const all=prods.map(item => item.theater_id);
-    const group=[...new Set(all)].slice(0,10).toString();
+    const group_arr=[...new Set(all)].slice(0,10);
+    const group=group_arr.toString();
     let query = q.get_theater_group(group);
     pool.query(query, (err, _res) => {
       pool.end();
       let data;
+      let new_data=[];
       (err) ? data=[] : data=_res.rows;
-      res.json(data);
+      group_arr.forEach( (item1) => {
+        data.forEach( item2 => {
+          if (item2.id===item1) new_data.push(item2);
+        })
+      })
+      res.json(new_data);
     })
   });
 });
