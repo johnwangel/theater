@@ -1,5 +1,21 @@
 module.exports = {
 
+  get_latest_updates: function(){
+    return `select theater_id, created_at
+            from productions
+            order by created_at desc
+            limit 100;`;
+  },
+
+
+  get_theater_group: function(group){
+    return `select t.*, s.abbr as state_abbr, sp.name as specialty_name
+            from theaters t
+            join states s on t.state=s.id
+            left outer join specialty sp on t.specialty_id=s.id
+            where t.id in (${group});`;
+  },
+
   find_productions_by_show: function(){
     return `SELECT p.*,
                 s.title,

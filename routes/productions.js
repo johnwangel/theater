@@ -159,6 +159,23 @@ prods.post('/editprod', jsonParser, (req,res) => {
   })
 });
 
+prods.get('/recentprods', jsonParser, (req,res) => {
+  let query=q.get_latest_updates();
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    let prods=_res.rows;
+    const all=prods.map(item => item.theater_id);
+    const group=[...new Set(all)].slice(0,10).toString();
+    let query = q.get_theater_group(group);
+    pool.query(query, (err, _res) => {
+      pool.end();
+      let data;
+      (err) ? data=[] : data=_res.rows;
+      res.json(data);
+    })
+  });
+});
+
 function processBlockText(txt){
   txt.replace(/'/g, '&rsquo;')
   var lf = String.fromCharCode(10);
