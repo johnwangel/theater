@@ -93,7 +93,7 @@ prods.get('/byShowGroup',function(req,res){
   pool.query(query, (err, _res) => {
     pool.end();
     if (err) res.json(error);
-    res.json({ data : _res.rows });
+    res.json({ data : _res.rows, group });
   });
 });
 
