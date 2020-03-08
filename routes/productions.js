@@ -71,14 +71,17 @@ prods.get('/byShowGroup',function(req,res){
   var group_id = parseInt(req.query.id);
   let group;
   let error={error: 'Error'};
+
+  let local= (tokens.db_creds.host==='127.0.0.1') ? true : false;
+
   switch (group_id){
     case 1:
       group='(22,23,65,66,206,328,942,943,944,945,946,947)';
-      if (!tokens.live) group='(22,23,65,66,206,328,599,600,601,602,603,604)';
+      if (local) group='(22,23,65,66,206,328,599,600,601,602,603,604)';
       break;
     case 2:
       group='(471,355,430,857,941,430,951,952,953,954,955,956,957,958,959,960,961,962)';
-      if (!tokens.live) group='(471,355,430,605,606,607,608,609,610,611,612,613,614,615,616,617,618)';
+      if (local) group='(471,355,430,605,606,607,608,609,610,611,612,613,614,615,616,617,618)';
       break;
     default:
       console.log('default');
