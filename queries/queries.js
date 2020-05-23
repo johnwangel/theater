@@ -1,5 +1,14 @@
 module.exports = {
 
+  get_clients: function(){
+    return `select c.ip, c.created_at, ci.name as city, s.abbr as state, co.code2 as country, c.postal, c.lat, c.long
+              from client c
+              join states s on c.state=s.id
+              join country co on c.country=co.country_id
+              join cities ci on c.city=ci.city_id
+            WHERE ip != '72.90.159.41';`;
+  },
+
   get_latest_updates: function(){
     return `select theater_id, created_at
             from productions

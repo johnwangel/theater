@@ -19,6 +19,9 @@ const functions = require('./routes/all_functions');
 const base = require('./routes/base');
 app.use('/', base);
 
+const admin = require('./routes/admin');
+app.use('/admin', admin);
+
 const artists = require('./routes/artists');
 app.use('/artists', artists);
 
