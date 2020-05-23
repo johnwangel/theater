@@ -137,8 +137,32 @@ module.exports = {
             returning *;`
   },
 
+  country_get : function(type){
+    //0=code2, 1=code3, 2=codenum, 3=name
+    let field;
+    switch (type){
+      case 0:
+        field='code2';
+        break;
+      case 1:
+        field='code3';
+        break;
+      case 2:
+        field='codenum';
+        break;
+      case 3:
+        field='name';
+        break;
+    }
+    return `select * from country where ${field}=$1;`
+  },
+
   state_get : function(id){
     return `select * from states where id=${id};`
+  },
+
+  state_get_by_name : function(){
+    return `select * from states where name=$1;`
   },
 
   city_get : function(){
@@ -149,6 +173,11 @@ module.exports = {
 
   city_save : function(city,state){
     return `insert into cities (name,state_id) values($1,$2) returning *;`
+  },
+
+  save_client : function(){
+    return `insert into client (ip,city,state,country,postal,lat,long)
+      VALUES ($1,$2,$3,$4,$5,$6,$7) returning *;`;
   },
 
   artist_save: function(){

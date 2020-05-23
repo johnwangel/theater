@@ -22,6 +22,28 @@ locations.get('/states',function(req,res){
   });
 });
 
+//log ip and location info
+locations.post('/logip', jsonParser, (req, res) => {
+  let b=req.body;
+  let statep=new Promise( (resolve,reject) => get_state(b.state,resolve,reject) );
+  statep.then( state => {
+    b.state_id=state;
+    let ap = [
+                new Promise( (resolve,reject) => get_city(b.city,state,resolve,reject) ),
+                new Promise( (resolve,reject) => get_country(b.country_code,0,resolve,reject) )
+              ];
+    Promise.all(ap).then( vals => {
+      b.city_id=vals[0];
+      b.country_id=vals[1].country_id;
+      let client = new Promise( (resolve,reject) => save_client(b,resolve,reject) );
+      client.then( id => res.json({ client_id: id.client_id }) );
+    })
+
+
+  })
+
+});
+
 const get_city = (city,state_id,resolve,reject) => {
   var pool = new Pool(creds);
   var cityg=q.city_get();
@@ -39,6 +61,50 @@ const get_city = (city,state_id,resolve,reject) => {
     }
   })
 }
+
+const get_state = (state_name,resolve,reject) => {
+  var pool = new Pool(creds);
+  pool.query(q.state_get_by_name(), [state_name], (err, _res) => {
+    if (err) reject(err);
+    if (_res.rowCount === 0) {
+      resolve(0);
+    } else {
+      pool.end();
+      resolve(_res.rows[0].id);
+    }
+  });
+};
+
+const get_country = (country,field,resolve,reject) => {
+  var pool = new Pool(creds);
+  pool.query(q.country_get(field), [country], (err, _res) => {
+    if (err) reject(err);
+    if (_res.rowCount === 0) {
+      resolve(0);
+    } else {
+      pool.end();
+      resolve(_res.rows[0]);
+    }
+  });
+};
+
+const save_client = (info,resolve,reject) => {
+  var pool = new Pool(creds);
+  var query=q.save_client();
+  var vals = [  info.IPv4 ? info.IPv4 : null,
+                info.city_id? info.city_id : null,
+                info.state_id? info.state_id : null,
+                info.country_id? info.country_id : null,
+                info.postal? info.postal : null,
+                info.latitude? info.latitude : null,
+                info.longitude? info.longitude : null
+              ];
+  pool.query(query,vals,(err, _res) => {
+    pool.end();
+    if (err) reject(err);
+    if (_res.rowCount) resolve(_res.rows[0]);
+  });
+};
 
 locations.get_city=get_city;
 
