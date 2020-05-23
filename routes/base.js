@@ -335,10 +335,10 @@ var proms =[];
 var pool = new Pool(creds);
 var query = 'insert into country (name,code2,code3,codenum) VALUES ($1,$2,$3,$4);';
 
-countries.forEach( item => {
-  const p = new Promise( (resolve,reject) => ins_ctry(item,resolve,reject));
-  proms.push(p);
-});
+// countries.forEach( item => {
+//   const p = new Promise( (resolve,reject) => ins_ctry(item,resolve,reject));
+//   proms.push(p);
+// });
 
 function ins_ctry(item,resolve,reject){
   pool.query(query, item, (err, _res) => {
