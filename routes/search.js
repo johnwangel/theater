@@ -159,8 +159,8 @@ function saveSearch(data){
   let query = q.save_search();
   let values = [
     (data.client) ? data.client : null,
-    (data.state) ? parseInt(data.state.split('-')[0]) : null,
     (data.city) ? data.city : null,
+    (data.state) ? parseInt(data.state.split('-')[0]) : null,
     (data.distance) ? parseInt(data.distance) : null,
     (data.theater) ? data.theater : null,
     (data.show) ? data.show : null
