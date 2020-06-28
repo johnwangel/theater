@@ -25,23 +25,27 @@ locations.get('/states',function(req,res){
 //log ip and location info
 locations.post('/logip', jsonParser, (req, res) => {
   let b=req.body;
-  let statep=new Promise( (resolve,reject) => get_state(b.state,resolve,reject) );
-  statep.then( state => {
-    b.state_id=state;
-    let ap = [
-                new Promise( (resolve,reject) => get_city(b.city,state,resolve,reject) ),
-                new Promise( (resolve,reject) => get_country(b.country_code,0,resolve,reject) )
-              ];
-    Promise.all(ap).then( vals => {
-      b.city_id=vals[0];
-      b.country_id=vals[1].country_id;
-      let client = new Promise( (resolve,reject) => save_client(b,resolve,reject) );
-      client.then( id => res.json({ client_id: id.client_id }) );
-    })
-
-
-  })
-
+  let is_logged=new Promise( (resolve,reject) => check_client(b.IPv4,resolve,reject) );
+  is_logged.then( id => {
+    if (id) {
+      res.json({ client_id: id });
+    } else {
+      let statep=new Promise( (resolve,reject) => get_state(b.state,resolve,reject) );
+      statep.then( state => {
+        b.state_id=state;
+        let ap = [
+                    new Promise( (resolve,reject) => get_city(b.city,state,resolve,reject) ),
+                    new Promise( (resolve,reject) => get_country(b.country_code,0,resolve,reject) )
+                  ];
+        Promise.all(ap).then( vals => {
+          b.city_id=vals[0];
+          b.country_id=vals[1].country_id;
+          let client = new Promise( (resolve,reject) => save_client(b,resolve,reject) );
+          client.then( id => res.json({ client_id: id.client_id }) );
+        });
+      });
+    }
+  });
 });
 
 const get_city = (city,state_id,resolve,reject) => {
@@ -103,6 +107,21 @@ const save_client = (info,resolve,reject) => {
     pool.end();
     if (err) reject(err);
     if (_res.rowCount) resolve(_res.rows[0]);
+  });
+};
+
+const check_client = (ip,resolve,reject) => {
+  var pool = new Pool(creds);
+  var query=q.get_client();
+  var vals=[ip];
+  pool.query(query,vals,(err, _res) => {
+    pool.end();
+    if (err) reject(err);
+    if (_res && _res.rowCount) {
+      resolve(_res.rows[0].client_id);
+    } else {
+      resolve(null);
+    }
   });
 };
 
