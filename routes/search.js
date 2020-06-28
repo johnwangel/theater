@@ -12,6 +12,7 @@ var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 search.post('/ByTheater',jsonParser, (req,res) => {
+  saveSearch(req.body);
   const values=[ `%${req.body.theater}%` ];
   var search=q.find_theater();
   var pool = new Pool(creds);
@@ -29,6 +30,7 @@ search.post('/ByTheater',jsonParser, (req,res) => {
 });
 
 search.post('/ByShow',jsonParser, (req,res) => {
+  saveSearch(req.body);
   const values=[ `%${req.body.show}%` ];
   var pool = new Pool(creds);
   var search=q.find_shows();
@@ -47,6 +49,7 @@ search.post('/ByShow',jsonParser, (req,res) => {
 
 search.post('/ByCity',jsonParser, (req,res) => {
   const b=req.body;
+  saveSearch(b);
   const data={};
 
   data.city=b.city;
@@ -152,15 +155,33 @@ function getGeometry(data, resolve, reject){
   });
 }
 
+function saveSearch(data){
+  let query = q.save_search();
+  let values = [
+    (data.client) ? data.client : null,
+    (data.state) ? parseInt(data.state.split('-')[0]) : null,
+    (data.city) ? data.city : null,
+    (data.distance) ? parseInt(data.distance) : null,
+    (data.theater) ? data.theater : null,
+    (data.show) ? data.show : null
+  ];
+
+  var poolc = new Pool(creds);
+  poolc.query(query, values, (err, _res) => {
+    poolc.end();
+    (err) ? console.log(err) : console.log('search saved');
+  });
+}
+
 function getUpcoming( t, resolve, reject ){
   var pool = new Pool(creds);
   var prod=q.upcoming_production();
   var val=[t]
   pool.query(prod, val, (err, _res) => {
     if (err || _res.rows.rowCount === 0 ){
-         resolve([]);
+        resolve([]);
       } else {
-         resolve(_res.rows);
+        resolve(_res.rows);
       }
   })
 }

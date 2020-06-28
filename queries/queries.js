@@ -1,5 +1,10 @@
 module.exports = {
 
+  save_search: function(){
+    return `insert into searches(client,city,state,distance,theater,show)
+      VALUES($1,$2,$3,$4,$5,$6);`;
+  },
+
   get_clients: function(){
     return `select c.ip, c.created_at, ci.name as city, s.abbr as state, co.code2 as country, c.postal, c.lat, c.long
               from client c
