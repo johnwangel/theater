@@ -1,17 +1,23 @@
 module.exports = {
 
+  add_click: function(cid){
+    if (cid > 0) return `INSERT INTO clicks(client,theater) VALUES($1,$2);`;
+    return `INSERT INTO clicks(theater) VALUES($1);`;
+  },
+
+  check_click: function(){
+    return `select *
+    from clicks
+    where theater=$1
+      and created_at > current_timestamp - interval '1 minutes';`
+  },
+
   save_search: function(){
     return `insert into searches(client,city,state,distance,theater,show)
       VALUES($1,$2,$3,$4,$5,$6);`;
   },
 
   get_client: function(){
-    // var d = new Date();
-    // var day = d.getDate();
-    // var month = d.getMonth() + 1;
-    // var year = d.getFullYear();
-    // var date = `${year}-${month}-${day}`;
-    // console.log(date);
     return `select * from client where ip=$1 and created_at>=now()::date + interval '1h';`;
   },
 
