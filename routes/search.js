@@ -50,75 +50,84 @@ search.post('/ByShow',jsonParser, (req,res) => {
 search.post('/ByCity',jsonParser, (req,res) => {
   const b=req.body;
   saveSearch(b);
-  const data={};
-
+  let data={};
+  data.startAt=b.startAt;
   data.city=b.city;
   data.distance=b.distance;
   var state = b.state.split('-');
   data.state=state[0];
   data.state_name=state[1];
-  var cityg=q.city_get();
-  let values = [data.city,data.state];
+  const city_promise = new Promise( (resolve, reject ) => get_city( data, resolve, reject ) );
+  city_promise.then( city_info => {
+    data = { ...data, ...city_info };
+    if (data.location_lat && data.location_lng) {
+      const srch_promise = new Promise ( (resolve,reject) => find_theaters(data,resolve,reject) );
+      srch_promise.then( theater_info => res.json(theater_info));
+    } else {
+      const ckgeo_promise = new Promise( (resolve, reject ) => check_geo( data, resolve, reject ) );
+      ckgeo_promise.then( geo_info => {
+        data = { ...data, ...geo_info  };
+        const srch_promise = new Promise ( (resolve,reject) => find_theaters(data,resolve,reject) );
+        srch_promise.then( theater_info => res.json(theater_info));
+      })
+    }
+  })
+});
+
+function check_geo(data,resolve,reject){
+  const geo_promise = new Promise( (resolve, reject ) => getGeometry( data, resolve, reject ) );
+  geo_promise.then( results => resolve(results) )
+  .catch(error => res.json({ message: 'failed' }));
+}
+
+function get_city(data,resolve,reject){
+  const city_inf = {};
+  var query=q.city_get();
+  let values = [ data.city, data.state ];
   var pool = new Pool(creds);
-  pool.query(cityg, values, (err, _res) => {
-      if (err) res.json([])
+  pool.query(query, values, (err, _res) => {
+      if (err) reject('error')
       if (_res.rowCount === 0) {
         citys=q.city_save();
         pool.query(citys, values, (err, _res) => {
-          data.city_id = _res.rows[0].city_id;
-          check_geo();
           pool.end();
+          city_inf.id = _res.rows[0].city_id;
+          resolve(city_inf);
         })
       } else {
-        if (_res.rows[0].location_lat) data.location_lat=_res.rows[0].location_lat;
-        if (_res.rows[0].location_lng) data.location_lng=_res.rows[0].location_lng;
-        data.city_id=_res.rows[0].city_id;
-        check_geo();
         pool.end();
+        if (_res.rows[0].location_lat) city_inf.location_lat=_res.rows[0].location_lat;
+        if (_res.rows[0].location_lng) city_inf.location_lng=_res.rows[0].location_lng;
+        city_inf.id = _res.rows[0].city_id;
+        resolve(city_inf);
       }
   })
+}
 
-    function check_geo(){
-      if (data.location_lat && data.location_lng){
-        find_theaters();
-      } else {
-        const geo_promise = new Promise( (resolve, reject ) => getGeometry( data, resolve, reject ) );
-        geo_promise.then( results => {
-            data.location_lat=results.location_lat;
-            data.location_lng=results.location_lng;
-            find_theaters();
-        })
-        .catch(error => res.json({ message: 'failed' }));
-      }
+function find_theaters(data,resolve,reject){
+  let return_data={ theaters: [], count: 0, startAt: data.startAt, prods: [] }
+  let srch=q.location_search();
+  var pools = new Pool(creds);
+  var vals=[data.location_lat,data.location_lng,data.distance];
+  pools.query(srch, vals, (err, _res) => {
+    pools.end();
+    if (err){
+     resolve(return_data);
+    } else {
+      return_data.count = _res.rowCount;
+      return_data.theaters = _res.rows.slice(25*data.startAt,25*(data.startAt+1));
+      const promise_list=[];
+      return_data.theaters.forEach( t => {
+        const promise = new Promise( (resolve, reject ) => getUpcoming( t.id, resolve, reject ) );
+        promise_list.push(promise);
+      })
+      Promise.all(promise_list).then( vals => {
+        return_data.prods=vals;
+        resolve(return_data);
+      })
     }
-
-    function find_theaters(){
-      let srch=q.location_search();
-      var pools = new Pool(creds);
-      var vals=[data.location_lat,data.location_lng,data.distance];
-      pools.query(srch, vals, (err, _res) => {
-        pools.end();
-        if (err){
-         res.json([]);
-        } else {
-          let thtr_count=_res.rowCount;
-          let thtrs=_res.rows.slice(25*b.startAt,25*(b.startAt+1));
-
-          let return_data={ theaters: thtrs, count: thtr_count, startAt: b.startAt };
-          const promise_list=[];
-
-          thtrs.forEach( t => {
-            const promise = new Promise( (resolve, reject ) => getUpcoming( t.id, resolve, reject ) );
-            promise_list.push(promise);
-          })
-          Promise.all(promise_list).then( vals => {
-            return_data.prods=vals;
-            res.json(return_data);
-          })
-        }
-      });
-    }
-});
+  });
+}
 
 const g_findplace_url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?';
 const g_findplace_type= '&inputtype=textquery';
@@ -185,5 +194,7 @@ function getUpcoming( t, resolve, reject ){
       }
   })
 }
+
+search.find_theaters=find_theaters;
 
 module.exports = search;

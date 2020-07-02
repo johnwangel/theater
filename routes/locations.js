@@ -1,6 +1,8 @@
 var express = require('express');
 var locations = express.Router();
 
+const { find_theaters } = require('./search');
+
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
 const tokens = require('../constants/tokens.js');
@@ -30,18 +32,33 @@ locations.post('/logip', jsonParser, (req, res) => {
     if (id) {
       res.json({ client_id: id });
     } else {
+      let az=[];
+      let search_data = {
+        type:         1,
+        searchType:   'ByCity',
+        city:         b.city,
+        location_lat: b.latitude,
+        location_lng: b.longitude,
+        distance:     25,
+        startAt:      0
+      };
+      az.push( new Promise ( (resolve,reject) => find_theaters(search_data,resolve,reject) ) );
       let statep=new Promise( (resolve,reject) => get_state(b.state,resolve,reject) );
       statep.then( state => {
         b.state_id=state;
-        let ap = [
-                    new Promise( (resolve,reject) => get_city(b.city,state,resolve,reject) ),
-                    new Promise( (resolve,reject) => get_country(b.country_code,0,resolve,reject) )
-                  ];
+        search_data.state=`${state}-${b.state}`;
+        let ap =[];
+        ap.push(new Promise( (resolve,reject) => get_city(b.city,state,resolve,reject) ) );
+        ap.push(new Promise( (resolve,reject) => get_country(b.country_code,0,resolve,reject) ) );
         Promise.all(ap).then( vals => {
           b.city_id=vals[0];
           b.country_id=vals[1].country_id;
-          let client = new Promise( (resolve,reject) => save_client(b,resolve,reject) );
-          client.then( id => res.json({ client_id: id.client_id }) );
+          az.push(new Promise( (resolve,reject) => save_client(b,resolve,reject) ) );
+          Promise.all(az).then( all_data => {
+            let results=all_data[0];
+            results.search=search_data;
+            res.json({ client_id: all_data[1], results });
+          });
         });
       });
     }
