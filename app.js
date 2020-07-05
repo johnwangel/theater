@@ -28,6 +28,9 @@ app.use('/artists', artists);
 const emails = require('./routes/emails');
 app.use('/', emails);
 
+const events = require('./routes/events');
+app.use('/events', events);
+
 const prods = require('./routes/productions');
 app.use('/productions', prods);
 
