@@ -9,9 +9,11 @@ module.exports = {
   },
 
   get_events_by_theater : function(){
-    return `SELECT *, t.label as event_type
+    return `SELECT e.*, t.label as event_type, s.title as show_title, g.name as genre_name
             FROM event e
             JOIN event_type t on e.event_type_id=t.event_type_id
+            LEFT JOIN shows s on e.show_id=s.id
+            LEFT JOIN genres g on s.genre=g.id
             WHERE theater_id=$1;`;
   },
 
@@ -39,6 +41,18 @@ module.exports = {
   update_event : function(){
     return `UPDATE event
             SET
+              title=$2,
+              show_id=$3,
+              event_type_id=$4,
+              description=$5,
+              date_start=$6,
+              time_start=$7,
+              no_repeat=$8,
+              date_end=$9,
+              website=$10,
+              more_info=$11,
+              is_free=$12,
+              updated_at=now()
             WHERE event_id=$1
             returning *;`;
   },

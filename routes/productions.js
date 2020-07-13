@@ -4,7 +4,7 @@ var prods = express.Router();
 const { get_data } = require('./base');
 const { save_artists, get_artists, process_artists, artists_by_type} = require('./artists');
 
-const { getArtistsForOneProduction }= require('./all_functions');
+const { getArtistsForOneProduction, processBlockText }= require('./all_functions');
 
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
@@ -205,14 +205,14 @@ prods.get('/recentprods', jsonParser, (req,res) => {
   });
 });
 
-function processBlockText(txt){
-  txt.replace(/'/g, '&rsquo;')
-  var lf = String.fromCharCode(10);
-  var res = txt.split(lf);
-  var newtxt = res.join('</p><p>');
-  const regex = RegExp('<p>.*?<\/p>$');
-  if(!regex.test(txt)) txt=`<p>${txt}</p>`;
-  return newtxt;
-}
+// function processBlockText(txt){
+//   txt.replace(/'/g, '&rsquo;')
+//   var lf = String.fromCharCode(10);
+//   var res = txt.split(lf);
+//   var newtxt = res.join('</p><p>');
+//   const regex = RegExp('<p>.*?<\/p>$');
+//   if(!regex.test(txt)) txt=`<p>${txt}</p>`;
+//   return newtxt;
+// }
 
 module.exports = prods;

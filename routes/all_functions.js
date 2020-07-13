@@ -37,4 +37,14 @@ functions.getArtistsForOneProduction = ( sid, pid, resolve, reject ) => {
   });
 }
 
+functions.processBlockText = (txt) => {
+  txt.replace(/'/g, '&rsquo;')
+  var lf = String.fromCharCode(10);
+  var res = txt.split(lf);
+  var newtxt = res.join('</p><p>');
+  const regex = RegExp('<p>.*?<\/p>$');
+  if(!regex.test(txt)) txt=`<p>${txt}</p>`;
+  return newtxt;
+}
+
 module.exports = functions;

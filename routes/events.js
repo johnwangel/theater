@@ -1,6 +1,9 @@
 var express = require('express');
 var events = express.Router();
 
+const { processBlockText }= require('./all_functions');
+
+
 const fetch=require('node-fetch');
 const bodyParser = require('body-parser');
 const q = require('../queries/events.js');
@@ -26,9 +29,6 @@ events.get('/types/',function(req,res){
 
 events.post('/addevent', jsonParser, (req,res) => {
   const ev=req.body;
-
-  console.log('event',ev)
-
   var query=q.create_event();
   const values = [
     (ev.event_title_1) ? ev.event_title_1 : null,
@@ -44,8 +44,39 @@ events.post('/addevent', jsonParser, (req,res) => {
     (ev.event_info_link_1) ? ev.event_info_link_1 : null,
     (ev.free) ? true : false
   ];
+  var pool = new Pool(creds);
+  pool.query(query, values, (err, _res) => {
+    if (err) {
+      console.log(err);
+      res.json({ error: 'Unable to save.'});
+      return;
+    }
+    let prom = new Promise( (resolve, reject ) => get_events_by_theater( ev.theater_id, resolve, reject ) );
+    prom.then( e => res.json(e) );
+  });
+});
 
-  console.log(query,values);
+events.post('/editevent', jsonParser, (req,res) => {
+  const ev=req.body;
+  var query=q.update_event();
+
+  const values = [
+    ev.event_id,
+    (ev.event_title_1) ? ev.event_title_1 : null,
+    (ev.show_select !=='0') ? ev.show_select : null,
+    ev.eventtype_1,
+    processBlockText(ev.description_1),
+    ev.start_date_1,
+    (ev.time) ? ev.time : null,
+    (ev.onetime) ? true : false,
+    (!ev.onetime) ? ev.end_date_1 : ev.start_date_1,
+    ev.event_link_1,
+    (ev.event_info_link_1) ? ev.event_info_link_1 : null,
+    (ev.free) ? true : false
+  ];
+
+
+  console.log('event',values)
 
   var pool = new Pool(creds);
   pool.query(query, values, (err, _res) => {
@@ -71,7 +102,6 @@ function get_events_by_theater(tid,resolve,reject){
   pool.query(query, [tid], (err, _res) => {
     pool.end();
     if (err) res.json({ error: 'Unable to save.'});
-    console.log('new event',_res.rows);
     if (_res.rows) resolve(_res.rows);
   })
 }
