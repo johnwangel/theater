@@ -1,15 +1,44 @@
 var express = require('express');
 var search = express.Router();
-
+const Moment = require('moment');
 const fetch=require('node-fetch');
 const bodyParser = require('body-parser');
 const q = require('../queries/queries.js');
+const s = require('../queries/searches.js');
 const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
+
+
+search.post('/ByEvent',jsonParser, (req,res) => {
+  var v=req.body;
+
+  //saveSearch(req.body);
+
+  let _start=Moment(v.start_date_1).parseZone().format('YYYY-MM-DD');
+  let _end = Moment(v.end_date_1).parseZone().format('YYYY-MM-DD');
+  let _type = (v.eventtype_1) ? parseInt(v.eventtype_1) : null;
+  let _free = (v.free_only) ? true : null;
+  const values=[ _start, _end];
+  if (_type) values.push(_type);
+
+  const search=s.search_event(_type,_free);
+
+  var pool = new Pool(creds);
+  pool.query(search, values, (err, _res) => {
+
+    pool.end();
+    if (err || _res.rowCount === 0 ){
+     res.json({ theaters: [], count: 0, startAt: req.body.startAt});
+    } else {
+      let return_data={ theaters: _res.rows, count: _res.rowCount, startAt: req.body.startAt };
+      res.json(return_data);
+    }
+  })
+});
 
 search.post('/ByTheater',jsonParser, (req,res) => {
   saveSearch(req.body);
