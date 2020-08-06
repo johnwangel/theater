@@ -16,8 +16,14 @@ module.exports = {
             JOIN states s on t.state=s.id
             LEFT JOIN shows s2 on e.show_id=s.id
             LEFT JOIN genres g on s2.genre=g.id
-            WHERE e.date_start >= $1
-            AND ( e.no_repeat = true or e.date_end <= $2 )
+            WHERE (e.no_repeat = true AND e.date_start >= $1)
+            OR ( e.no_repeat = false AND
+                 (
+                  (e.date_start >= $1 AND e.date_start <= $2 )
+                  OR
+                  (e.date_end >= $1 AND e.date_end <= $2 )
+                 )
+               )
             ${type$} ${free$}
             ORDER BY e.date_start;`;
   }
