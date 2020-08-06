@@ -27,6 +27,8 @@ search.post('/ByEvent',jsonParser, (req,res) => {
 
   const search=s.search_event(_type,_free);
 
+  //console.log(search,values);
+
   var pool = new Pool(creds);
   pool.query(search, values, (err, _res) => {
 
