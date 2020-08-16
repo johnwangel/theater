@@ -40,7 +40,7 @@ const template = require('../emails/templates');
 let users_p = new Promise ( (resolve, reject) => registered_users(resolve,reject));
 users_p.then( data => {
   let nonusers_p = new Promise ( (resolve, reject) => nonregistered_theaters(data.theaters,resolve,reject));
-  nonusers_p.then( newdata => send_emails(newdata));
+  nonusers_p.then( newdata => do_theaters(newdata));
 });
 
 function registered_users(resolve,reject){
@@ -76,8 +76,8 @@ function do_theaters(list) {
 
   Promise.all(proms).then( thtrs => {
     thtrs.forEach( item => { if(item)theaters.push(item); });
-    console.log('about to send',theaters);
-    //send_emails(theaters);
+    //console.log('about to send',theaters);
+    send_emails(theaters);
   });
 }
 
@@ -100,11 +100,12 @@ function send_emails(t){
 }
 
 function send_email(th){
-  if(th.main_email == '') return;
-  //console.log('getting here',th.main_email);
+  console.log(th);
+  if(th.email === undefined) return;
+  console.log('about to send',th.email);
   //return;
   send({
-          to: `${th.main_email}`,
+          to: `${th.email}`,
           //to: 'info@stagerabbit.com',
           bcc: 'info@stagerabbit.com',
           subject: 'List Your Online Events for FREE at StageRabbit',
