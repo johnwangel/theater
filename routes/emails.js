@@ -37,11 +37,11 @@ const template = require('../emails/templates');
 // });
 
 
-let users_p = new Promise ( (resolve, reject) => registered_users(resolve,reject));
-users_p.then( data => {
-  let nonusers_p = new Promise ( (resolve, reject) => nonregistered_theaters(data.theaters,resolve,reject));
-  nonusers_p.then( newdata => do_theaters(newdata));
-});
+// let users_p = new Promise ( (resolve, reject) => registered_users(resolve,reject));
+// users_p.then( data => {
+//   let nonusers_p = new Promise ( (resolve, reject) => nonregistered_theaters(data.theaters,resolve,reject));
+//   nonusers_p.then( newdata => do_theaters(newdata));
+// });
 
 function registered_users(resolve,reject){
   var query=`select *, t.email as main_email from logins l join theaters t on l.token = t.token;`;
