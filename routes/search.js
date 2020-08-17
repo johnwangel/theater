@@ -80,7 +80,7 @@ search.post('/ByShow',jsonParser, (req,res) => {
 
 search.post('/ByCity',jsonParser, (req,res) => {
   const b=req.body;
-  //saveSearch(b);
+  saveSearch(b);
   let data={};
   data.startAt=b.startAt;
   data.city=b.city;
