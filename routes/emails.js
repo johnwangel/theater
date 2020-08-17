@@ -37,11 +37,17 @@ const template = require('../emails/templates');
 // });
 
 
-// let users_p = new Promise ( (resolve, reject) => registered_users(resolve,reject));
-// users_p.then( data => {
-//   let nonusers_p = new Promise ( (resolve, reject) => nonregistered_theaters(data.theaters,resolve,reject));
-//   nonusers_p.then( newdata => do_theaters(newdata));
-// });
+Promise.all([
+  new Promise ( (resolve, reject) => registered_users(resolve,reject)),
+  new Promise ( (resolve, reject) => received_it(2,resolve,reject))
+]).then((values) => {
+  let do_not_send=values[0].theaters.concat(values[1]);
+  let send_list=new Promise ( (resolve, reject) => send_to(do_not_send,resolve,reject));
+  send_list.then( vals => {
+    let newList= [ ... new Set(vals.map( item => item.id )) ];
+    do_theaters(newList);
+  });
+});
 
 function registered_users(resolve,reject){
   var query=`select *, t.email as main_email from logins l join theaters t on l.token = t.token;`;
@@ -55,14 +61,24 @@ function registered_users(resolve,reject){
   });
 }
 
-function nonregistered_theaters(reg,resolve,reject){
-  let reg_str=reg.toString();
-  var query=`select id, name, city, state, email as main_email, token from theaters where id not in (${reg_str}) limit 100;`;
+function received_it(nlid,resolve,reject){
+  var query=`select distinct theater_id from notification where notification_list_id=${nlid};`;
   var pool = new Pool(creds);
   pool.query(query, (err, _res) => {
     pool.end();
     let list=_res.rows;
-    resolve(list);
+    let newList= [ ... new Set(list.map( item => item.theater_id )) ];
+    resolve(newList);
+  });
+}
+
+function send_to(reg,resolve,reject){
+  let reg_str=reg.toString();
+  var query=`select id, name, city, state, email as main_email, token from theaters where id not in (${reg_str}) limit 500;`;
+  var pool = new Pool(creds);
+  pool.query(query, (err, _res) => {
+    pool.end();
+    resolve(_res.rows);
   });
 }
 
@@ -70,7 +86,7 @@ function do_theaters(list) {
   let proms=[];
   let theaters=[];
   list.forEach(item=>{
-    let x = new Promise( (resolve, reject ) => getit(item.id,resolve,reject));
+    let x = new Promise( (resolve, reject ) => getit(item,resolve,reject));
     proms.push(x);
   });
 
@@ -100,9 +116,9 @@ function send_emails(t){
 }
 
 function send_email(th){
-  console.log(th);
+  //console.log(th);
   if(th.email === undefined) return;
-  console.log('about to send',th.email);
+  //console.log('about to send',th.email);
   //return;
   send({
           to: `${th.email}`,
