@@ -37,17 +37,17 @@ const template = require('../emails/templates');
 // });
 
 
-Promise.all([
-  new Promise ( (resolve, reject) => registered_users(resolve,reject)),
-  new Promise ( (resolve, reject) => received_it(2,resolve,reject))
-]).then((values) => {
-  let do_not_send=values[0].theaters.concat(values[1]);
-  let send_list=new Promise ( (resolve, reject) => send_to(do_not_send,resolve,reject));
-  send_list.then( vals => {
-    let newList= [ ... new Set(vals.map( item => item.id )) ];
-    do_theaters(newList);
-  });
-});
+// Promise.all([
+//   new Promise ( (resolve, reject) => registered_users(resolve,reject)),
+//   new Promise ( (resolve, reject) => received_it(2,resolve,reject))
+// ]).then((values) => {
+//   let do_not_send=values[0].theaters.concat(values[1]);
+//   let send_list=new Promise ( (resolve, reject) => send_to(do_not_send,resolve,reject));
+//   send_list.then( vals => {
+//     let newList= [ ... new Set(vals.map( item => item.id )) ];
+//     do_theaters(newList);
+//   });
+// });
 
 function registered_users(resolve,reject){
   var query=`select *, t.email as main_email from logins l join theaters t on l.token = t.token;`;
@@ -119,7 +119,7 @@ function send_email(th){
   //console.log(th);
   if(th.email === undefined) return;
   //console.log('about to send',th.email);
-  //return;
+  return;
   send({
           to: `${th.email}`,
           //to: 'info@stagerabbit.com',

@@ -157,7 +157,7 @@ module.exports = {
 
   geometry_save : function(){
     return `update cities set
-            location_lat=$1,
+              location_lat=$1,
               location_lng=$2,
               viewport_ne_lat=$3,
               viewport_ne_lng=$4,
@@ -196,7 +196,8 @@ module.exports = {
   },
 
   city_get : function(){
-    return `select s.name as state_name, s.abbr as state_abbr, c.* from cities c
+    return `select s.name as state_name, s.abbr as state_abbr, c.*
+            from cities c
             join states s on c.state_id=s.id
             where c.name=$1 and c.state_id=$2;`
   },

@@ -80,7 +80,7 @@ search.post('/ByShow',jsonParser, (req,res) => {
 
 search.post('/ByCity',jsonParser, (req,res) => {
   const b=req.body;
-  saveSearch(b);
+  //saveSearch(b);
   let data={};
   data.startAt=b.startAt;
   data.city=b.city;
@@ -92,6 +92,7 @@ search.post('/ByCity',jsonParser, (req,res) => {
   city_promise.then( city_info => {
     data = { ...data, ...city_info };
     if (data.location_lat && data.location_lng) {
+      console.log('SOME lat or long')
       const srch_promise = new Promise ( (resolve,reject) => find_theaters(data,resolve,reject) );
       srch_promise.then( theater_info => res.json(theater_info));
     } else {
@@ -99,7 +100,9 @@ search.post('/ByCity',jsonParser, (req,res) => {
       ckgeo_promise.then( geo_info => {
         data = { ...data, ...geo_info  };
         const srch_promise = new Promise ( (resolve,reject) => find_theaters(data,resolve,reject) );
-        srch_promise.then( theater_info => res.json(theater_info));
+        srch_promise.then( theater_info => {
+          res.json(theater_info)
+        });
       })
     }
   })
@@ -115,6 +118,7 @@ function get_city(data,resolve,reject){
   const city_inf = {};
   var query=q.city_get();
   let values = [ data.city, data.state ];
+
   var pool = new Pool(creds);
   pool.query(query, values, (err, _res) => {
       if (err) reject('error')
@@ -184,8 +188,9 @@ function getGeometry(data, resolve, reject){
       String(json.candidates[0].geometry.viewport.northeast.lng),
       String(json.candidates[0].geometry.viewport.southwest.lat),
       String(json.candidates[0].geometry.viewport.southwest.lng),
-      data.city_id
+      data.id
     ];
+
     geoq=q.geometry_save();
     var poolc = new Pool(creds);
     poolc.query(geoq, values, (err, _res) => {
