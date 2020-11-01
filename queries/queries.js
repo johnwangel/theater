@@ -18,7 +18,8 @@ module.exports = {
   },
 
   get_client: function(){
-    return `select * from client where ip=$1 and created_at>=now()::date + interval '1h';`;
+    return `select * from client
+            where ip=$1 and created_at>=now()::date + interval '1h';`;
   },
 
   get_clients: function(){
@@ -27,7 +28,8 @@ module.exports = {
               join states s on c.state=s.id
               join country co on c.country=co.country_id
               join cities ci on c.city=ci.city_id
-            WHERE ip != '72.90.159.41';`;
+            order by created_at desc
+            limit 100;`;
   },
 
   get_latest_updates: function(){
