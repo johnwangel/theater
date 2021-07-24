@@ -31,6 +31,9 @@ app.use('/', emails);
 const events = require('./routes/events');
 app.use('/events', events);
 
+const faves = require('./routes/faves');
+app.use('/faves', faves);
+
 const prods = require('./routes/productions');
 app.use('/productions', prods);
 
