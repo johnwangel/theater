@@ -3,7 +3,7 @@ module.exports = {
     return `SELECT f.production_id
             FROM favorite f
             JOIN productions p on f.production_id=p.production_id
-            WHERE f.user_id=$1
+            WHERE f.user_id=$1 and f.liked=1
             ORDER BY p.start_date;`
   },
   is_favorite : function(){
