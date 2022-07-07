@@ -22,7 +22,7 @@
     "express-session": "^1.16.2",
     "gmail-send": "^1.8.10",
     "jsonwebtoken": "^8.5.1",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "mysql2": "^1.6.5",
     "node-fetch": "^2.6.0",
     "node-sass-chokidar": "^1.4.0",
