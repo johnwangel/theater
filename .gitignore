@@ -1,5 +1,5 @@
-node_modules
-data
-constants
-config
+node_modules/
+data/
+constants/
+config/
 .DS_Store

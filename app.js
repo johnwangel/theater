@@ -1,7 +1,22 @@
 const https = require('https')
 const express = require('express');
+const { postgraphile } = require("postgraphile");
+
 const app = express();
 app.use(express.static('public'));
+
+// app.use(
+//   postgraphile(
+//     process.env.DATABASE_URL || "theater_user",
+//     "public",
+//     {
+//       watchPg: true,
+//       graphiql: true,
+//       enhanceGraphiql: true,
+//       graphiqlRoute: "/graphiql",
+//     }
+//   )
+// );
 
 const PORT = process.env.PORT || 3100;
 

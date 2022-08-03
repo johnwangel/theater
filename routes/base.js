@@ -11,8 +11,6 @@ const tokens = require('../constants/tokens.js');
 const { Pool, Client } = require('pg');
 const creds = tokens.db_creds;
 
-
-
 base.get('/', (req,res) => {
   if (!req.query.type) res.json({status: 'ok'});
   var id, type=req.query.type;
@@ -22,7 +20,10 @@ base.get('/', (req,res) => {
   prom.then( data => res.json({ data, id }) );
 });
 
-const get_data = ( type, id, resolve, reject, client_id ) => {
+const get_data = ( ...myArgs ) => {
+  let type,id,resolve,reject,client_id;
+  [type,id,resolve,reject,client_id]=Object.values(myArgs);
+
   var query,val;
   var click={ client_id, theater: id };
   let date=Moment.utc().format('YYYY-MM-DD');
@@ -34,7 +35,9 @@ const get_data = ( type, id, resolve, reject, client_id ) => {
       const checkIt = new Promise( (resolve, reject ) => checkClick( click, resolve, reject ) );
       checkIt.then( found => { if(!found) saveClick(click); });
       query=q.theater(id);
+      console.log(query)
       val=[id];
+      console.log(val)
       break;
     case 'all_shows':
       query=q.shows();
@@ -72,8 +75,11 @@ const get_data = ( type, id, resolve, reject, client_id ) => {
   }
   var pool = new Pool(creds);
   pool.query(query, val, (err, _res) => {
+    console.log('results',err,_res)
+
     if ( _res && _res.rows ){
       var data=_res.rows;
+      console.log(data)
     } else {
       data: { error: 'no rows returned' }
     }
@@ -110,6 +116,9 @@ function checkClick(data,resolve,reject){
   });
 
 }
+
+new Promise( (resolve, reject ) => get_data( 'theater', 100, resolve, reject, 1 ) )
+.then(res=>console.log(res))
 
 
 // var proms =[];

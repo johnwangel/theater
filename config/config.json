@@ -2,7 +2,7 @@
   "development": {
     "username": "theater_user",
     "password": "",
-    "database": "johnatkins",
+    "database": "theater_user",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },

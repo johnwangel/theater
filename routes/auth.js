@@ -38,7 +38,7 @@ auth.use(
 
 auth.use(function(req, res, next){
   if (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'JWT'){
-    jsonwebtoken.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+    jsonwebtoken.verify(req.headers.authorization.split(' ')[1], tokens.jwt, function(err, decode){
       if (err) {
         req.user = undefined;
       }
@@ -118,7 +118,7 @@ function make_user( values, tid, resolve, reject ) {
               let user=_res.rows[0];
               let token_info = { id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, token: user.token, tid: tid };
               //console.log('token in make_user',token_info);
-              user.jwt=jsonwebtoken.sign( token_info, 'RESTFULAPIs' );
+              user.jwt=jsonwebtoken.sign( token_info, tokens.jwt );
               resolve(user);
             } else {
               resolve('ERROR');
@@ -140,7 +140,7 @@ auth.post('/login', jsonParser, ( req, res ) => {
       if(bcrypt.compareSync( req.body.password, user.password )){
         let item={ id: user.user_id, level: user.level, username: user.username, fname: user.fname, lname: user.lname, tid: user.tid, token: user.token };
         //console.log('token in login', item);
-        user.jwt=jsonwebtoken.sign( item, 'RESTFULAPIs' );
+        user.jwt=jsonwebtoken.sign( item, tokens.jwt );
         return res.json(user);
       } else {
         res.json({ message: 'Authentication failed. Wrong password.'});
